@@ -20,6 +20,12 @@
 <style>
   html, body { background:#09090b; margin:0; padding:0; }
   #root { min-height: 100vh; }
+  .carbon-texture {
+    background-color: #101012;
+    background-image:
+      repeating-linear-gradient(45deg, rgba(255,255,255,0.035) 0, rgba(255,255,255,0.035) 1px, transparent 1px, transparent 6px),
+      repeating-linear-gradient(-45deg, rgba(255,255,255,0.035) 0, rgba(255,255,255,0.035) 1px, transparent 1px, transparent 6px);
+  }
 </style>
 </head>
 <body>
@@ -73,6 +79,9 @@ const RotateCcw = (p) => <IconBase className={p.className}><path d="M3 12a9 9 0 
 const AlertTriangle = (p) => <IconBase className={p.className}><path d="M10.3 3.9 2 19h20L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></IconBase>;
 const ChevronLeft = (p) => <IconBase className={p.className}><path d="m15 18-6-6 6-6"/></IconBase>;
 const ListChecks = (p) => <IconBase className={p.className}><path d="m3 6 1.5 1.5L7 5"/><path d="m3 12 1.5 1.5L7 11"/><path d="m3 18 1.5 1.5L7 17"/><path d="M11 6h10M11 12h10M11 18h10"/></IconBase>;
+const Thermometer = (p) => <IconBase className={p.className}><path d="M14 4v10.5a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0z"/><circle cx="12" cy="17" r="1.4" fill="currentColor" stroke="none"/></IconBase>;
+const Moon = (p) => <IconBase className={p.className}><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></IconBase>;
+const Snowflake = (p) => <IconBase className={p.className}><path d="M12 2v20M4.2 7l15.6 10M4.2 17l15.6-10"/></IconBase>;
 const STORAGE_KEY = "ride-check-data";
 const STORAGE_KEY_LOG = "ride-check-log";
 
@@ -126,6 +135,16 @@ function fmtHour12(hourNum) {
   let h12 = h % 12;
   if (h12 === 0) h12 = 12;
   return `${h12}${period}`;
+}
+
+function fmtTimeIso(iso) {
+  if (!iso) return "--:--";
+  const hh = parseInt(iso.slice(11, 13), 10);
+  const mm = iso.slice(14, 16);
+  const period = hh < 12 ? "AM" : "PM";
+  let h12 = hh % 12;
+  if (h12 === 0) h12 = 12;
+  return `${h12}:${mm} ${period}`;
 }
 
 function nowKeyForTz(tz) {
@@ -183,6 +202,70 @@ function commuteVerdict(hours, prefs, sun) {
   const good = evals.every((e) => e.good);
   const reasons = [...new Set(evals.flatMap((e) => e.reasons))];
   return { status: good ? "good" : "bad", reasons };
+}
+
+function scoreFromHours(hours, prefs, sun) {
+  if (!hours.length) return null;
+  const goodCount = hours.filter((h) => evaluateHour(h, prefs, sun).good).length;
+  return { good: goodCount, total: hours.length };
+}
+
+function computeRideScore(morningHours, eveningHours, prefs, homeSun, workSun) {
+  const m = scoreFromHours(morningHours, prefs, homeSun);
+  const e = scoreFromHours(eveningHours, prefs, workSun);
+  const totalGood = (m ? m.good : 0) + (e ? e.good : 0);
+  const totalHours = (m ? m.total : 0) + (e ? e.total : 0);
+  if (totalHours === 0) return null;
+  return Math.round((totalGood / totalHours) * 100);
+}
+
+function conditionFlags(hours, prefs, sun) {
+  const flags = { temp: false, wind: false, rain: false, fog: false, snow: false, storm: false, ice: false, dark: false };
+  hours.forEach((hour) => {
+    const [, category] = codeInfo(hour.weathercode);
+    if (hour.temp < prefs.tempMin || hour.temp > prefs.tempMax) flags.temp = true;
+    if (hour.wind > prefs.maxWind || hour.gust > prefs.maxGust) flags.wind = true;
+    if (category === "storm") flags.storm = true;
+    if (prefs.avoidRain && category !== "storm" && (category === "rain" || hour.precipProb >= prefs.rainProbThreshold)) flags.rain = true;
+    if (prefs.avoidSnow && category === "snow") flags.snow = true;
+    if (prefs.avoidFog && (category === "fog" || hour.visibilityMiles < prefs.minVisibilityMiles)) flags.fog = true;
+    if (prefs.warnIceRisk && hour.temp <= 34) flags.ice = true;
+    if (prefs.avoidDark && sun && (hour.iso < sun.sunriseIso || hour.iso > sun.sunsetIso)) flags.dark = true;
+  });
+  return flags;
+}
+
+function mergeFlags(a, b) {
+  const out = {};
+  Object.keys(a).forEach((k) => { out[k] = a[k] || b[k]; });
+  return out;
+}
+
+function gearSuggestion(temp, flags) {
+  if (temp === null || temp === undefined) return null;
+  let jacket, gloves;
+  const extra = [];
+  if (temp < 32) { jacket = "Insulated/heated suit"; gloves = "Insulated winter gloves"; extra.push("Balaclava or neck gaiter"); }
+  else if (temp < 45) { jacket = "Insulated jacket + thermal liner"; gloves = "Winter gloves"; extra.push("Neck gaiter"); }
+  else if (temp < 60) { jacket = "Mid-weight jacket + liner"; gloves = "Mid-weight gloves"; }
+  else if (temp < 75) { jacket = "Standard armored jacket"; gloves = "Standard gloves"; }
+  else if (temp < 85) { jacket = "Vented/mesh jacket"; gloves = "Lightweight gloves"; }
+  else { jacket = "Mesh jacket, minimal layers"; gloves = "Vented gloves"; extra.push("Bring water"); }
+  if (flags.rain) extra.push("Rain gear");
+  if (flags.wind) extra.push("Wind-resistant layer");
+  return { jacket, gloves, extra };
+}
+
+function polarPoint(cx, cy, r, tFrac) {
+  const phi = ((135 + 270 * tFrac) * Math.PI) / 180;
+  return [cx + r * Math.cos(phi), cy + r * Math.sin(phi)];
+}
+
+function arcPath(cx, cy, r, t0, t1) {
+  const [x0, y0] = polarPoint(cx, cy, r, t0);
+  const [x1, y1] = polarPoint(cx, cy, r, t1);
+  const largeArc = (t1 - t0) * 270 > 180 ? 1 : 0;
+  return `M ${x0} ${y0} A ${r} ${r} 0 ${largeArc} 1 ${x1} ${y1}`;
 }
 
 function computeDays(weather) {
@@ -431,6 +514,22 @@ function CommuteCard({ label, sublabel, windowLabel, verdict }) {
   );
 }
 
+function SunTimes({ sun }) {
+  if (!sun) return null;
+  return (
+    <div className="flex items-center justify-center gap-6 text-xs text-zinc-400 font-mono">
+      <span className="flex items-center gap-1.5">
+        <Sun className="w-3.5 h-3.5 text-amber-400" />
+        {fmtTimeIso(sun.sunriseIso)}
+      </span>
+      <span className="flex items-center gap-1.5">
+        <Moon className="w-3.5 h-3.5 text-zinc-500" />
+        {fmtTimeIso(sun.sunsetIso)}
+      </span>
+    </div>
+  );
+}
+
 function VerdictPill({ label, status }) {
   const good = status === "good";
   const unknown = status === "unknown";
@@ -439,6 +538,109 @@ function VerdictPill({ label, status }) {
       {label}
       {!unknown && (good ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />)}
     </span>
+  );
+}
+
+function RideGauge({ score }) {
+  const cx = 100, cy = 105, r = 82;
+  const known = score !== null && score !== undefined;
+  const clamped = known ? Math.max(0, Math.min(100, score)) : 0;
+  const needleRotation = 270 * (clamped / 100) - 135;
+  const zones = [
+    { from: 0, to: 0.49, color: "#ef4444" },
+    { from: 0.49, to: 0.7, color: "#f59e0b" },
+    { from: 0.7, to: 1, color: "#10b981" },
+  ];
+  return (
+    <svg viewBox="0 0 200 150" className="w-full max-w-[220px] mx-auto">
+      {[0, 0.25, 0.5, 0.75, 1].map((t, i) => {
+        const [x1, y1] = polarPoint(cx, cy, r + 6, t);
+        const [x2, y2] = polarPoint(cx, cy, r + 15, t);
+        return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#52525b" strokeWidth="2" />;
+      })}
+      {zones.map((z, i) => (
+        <path key={i} d={arcPath(cx, cy, r, z.from, z.to)} fill="none" stroke={z.color} strokeWidth="10" opacity={known ? 0.9 : 0.25} />
+      ))}
+      {known && (
+        <g transform={`rotate(${needleRotation} ${cx} ${cy})`}>
+          <polygon points={`${cx},${cy - r + 20} ${cx - 3.5},${cy} ${cx + 3.5},${cy}`} fill="#f4f4f5" />
+        </g>
+      )}
+      <circle cx={cx} cy={cy} r="7" fill="#18181b" stroke="#fbbf24" strokeWidth="2" />
+      <text x={cx} y={cy + 36} textAnchor="middle" fontFamily="ui-monospace, monospace" fontSize="26" fontWeight="700" fill="#f4f4f5">
+        {known ? clamped : "\u2014"}
+      </text>
+    </svg>
+  );
+}
+
+function WarningLight({ on, Icon, title }) {
+  return (
+    <div title={title} className="flex flex-col items-center gap-1">
+      <div className={`w-8 h-8 rounded-full flex items-center justify-center border ${on ? "bg-amber-500/20 border-amber-500 text-amber-400" : "bg-zinc-800/40 border-zinc-800 text-zinc-700"}`}>
+        <Icon className="w-4 h-4" />
+      </div>
+    </div>
+  );
+}
+
+function WarningLights({ flags }) {
+  const items = [
+    { key: "temp", Icon: Thermometer, title: "Temperature" },
+    { key: "wind", Icon: Wind, title: "Wind" },
+    { key: "rain", Icon: CloudRain, title: "Rain" },
+    { key: "fog", Icon: CloudFog, title: "Fog" },
+    { key: "snow", Icon: CloudSnow, title: "Snow" },
+    { key: "storm", Icon: CloudLightning, title: "Storm" },
+    { key: "ice", Icon: Snowflake, title: "Ice risk" },
+    { key: "dark", Icon: Moon, title: "Darkness" },
+  ];
+  return (
+    <div className="flex justify-center gap-2 flex-wrap">
+      {items.map(({ key, Icon, title }) => (
+        <WarningLight key={key} on={!!flags[key]} Icon={Icon} title={title} />
+      ))}
+    </div>
+  );
+}
+
+function RideGaugeCard({ score, flags }) {
+  const known = score !== null && score !== undefined;
+  const label = !known ? "NO DATA" : score >= 90 ? "GO" : score >= 50 ? "CAUTION" : "NO-GO";
+  const labelColor = !known ? "text-zinc-600" : score >= 90 ? "text-emerald-400" : score >= 50 ? "text-amber-400" : "text-red-400";
+  return (
+    <div className="carbon-texture rounded-2xl border border-zinc-800 p-4 pb-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+      <h3 className="text-xs font-semibold uppercase tracking-widest text-amber-400 mb-1 text-center">Ride Score</h3>
+      <RideGauge score={score} />
+      <div className={`text-center font-mono font-bold tracking-widest text-sm -mt-3 mb-3 ${labelColor}`}>{label}</div>
+      <WarningLights flags={flags} />
+    </div>
+  );
+}
+
+function GearCard({ gear }) {
+  if (!gear) return null;
+  return (
+    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+      <h3 className="text-xs font-semibold uppercase tracking-widest text-amber-400 mb-3">Gear check</h3>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <div className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Jacket</div>
+          <div className="text-sm text-zinc-200">{gear.jacket}</div>
+        </div>
+        <div>
+          <div className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Gloves</div>
+          <div className="text-sm text-zinc-200">{gear.gloves}</div>
+        </div>
+      </div>
+      {gear.extra.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {gear.extra.map((e, i) => (
+            <span key={i} className="text-xs px-2 py-1 rounded-md bg-amber-500/10 text-amber-300 border border-amber-900/60">{e}</span>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -646,6 +848,18 @@ function App() {
   const inMorningWindow = (h) => hoursInWindow([h], prefs.morningStart, prefs.morningEnd).length > 0;
   const inEveningWindow = (h) => hoursInWindow([h], prefs.eveningStart, prefs.eveningEnd).length > 0;
 
+  const morningWindowHours = homeDay ? hoursInWindow(homeDay.hours, prefs.morningStart, prefs.morningEnd) : [];
+  const eveningWindowHours = workDay ? hoursInWindow(workDay.hours, prefs.eveningStart, prefs.eveningEnd) : [];
+  const rideScore = computeRideScore(morningWindowHours, eveningWindowHours, prefs, homeDay && homeDay.sun, workDay && workDay.sun);
+  const warningFlags = mergeFlags(
+    conditionFlags(morningWindowHours, prefs, homeDay && homeDay.sun),
+    conditionFlags(eveningWindowHours, prefs, workDay && workDay.sun)
+  );
+
+  const allWindowHours = [...morningWindowHours, ...eveningWindowHours];
+  const minWindowTemp = allWindowHours.length ? Math.min(...allWindowHours.map((h) => h.temp)) : null;
+  const gear = gearSuggestion(minWindowTemp, warningFlags);
+
   const todayKey = homeDays[0] ? homeDays[0].date : null;
 
   const logStats = useMemo(() => {
@@ -836,14 +1050,20 @@ function App() {
                       ))}
                     </div>
 
+                    <SunTimes sun={homeDay && homeDay.sun} />
+
                     {!homeDay || homeDay.hours.length === 0 ? (
                       <div className="text-center text-zinc-500 text-sm py-10">No more riding hours left today.</div>
                     ) : (
                       <>
+                        <RideGaugeCard score={rideScore} flags={warningFlags} />
+
                         <div className="space-y-3">
                           <CommuteCard label="Morning commute" sublabel={hasWork ? `At ${data.locations.home.name}` : null} windowLabel={`${prefs.morningStart} – ${prefs.morningEnd}`} verdict={morningVerdict} />
                           <CommuteCard label="Evening commute" sublabel={hasWork ? `At ${data.locations.work.name}` : null} windowLabel={`${prefs.eveningStart} – ${prefs.eveningEnd}`} verdict={eveningVerdict} />
                         </div>
+
+                        <GearCard gear={gear} />
 
                         {homeDay.isToday && (
                           <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
