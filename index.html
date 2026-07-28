@@ -82,6 +82,7 @@ const ListChecks = (p) => <IconBase className={p.className}><path d="m3 6 1.5 1.
 const Thermometer = (p) => <IconBase className={p.className}><path d="M14 4v10.5a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0z"/><circle cx="12" cy="17" r="1.4" fill="currentColor" stroke="none"/></IconBase>;
 const Moon = (p) => <IconBase className={p.className}><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></IconBase>;
 const Snowflake = (p) => <IconBase className={p.className}><path d="M12 2v20M4.2 7l15.6 10M4.2 17l15.6-10"/></IconBase>;
+const Droplet = (p) => <IconBase className={p.className}><path d="M12 2s7 7.5 7 12.5a7 7 0 1 1-14 0C5 9.5 12 2 12 2z"/></IconBase>;
 const STORAGE_KEY = "ride-check-data";
 const STORAGE_KEY_LOG = "ride-check-log";
 
@@ -95,6 +96,8 @@ const DEFAULT_PREFS = {
   avoidFog: true,
   minVisibilityMiles: 2,
   avoidSnow: true,
+  avoidHumidity: true,
+  maxHumidity: 75,
   warnIceRisk: true,
   avoidDark: true,
   morningStart: "07:30",
@@ -181,6 +184,7 @@ function evaluateHour(hour, prefs, sun) {
   if (prefs.avoidFog && (category === "fog" || hour.visibilityMiles < prefs.minVisibilityMiles)) {
     reasons.push(`Visibility ${hour.visibilityMiles.toFixed(1)} mi`);
   }
+  if (prefs.avoidHumidity && hour.humidity > prefs.maxHumidity) reasons.push(`${hour.humidity}% humidity`);
   if (prefs.warnIceRisk && hour.temp <= 34) reasons.push("Possible ice (≤34°F)");
   if (prefs.avoidDark && sun && (hour.iso < sun.sunriseIso || hour.iso > sun.sunsetIso)) {
     reasons.push("Outside daylight");
@@ -220,7 +224,7 @@ function computeRideScore(morningHours, eveningHours, prefs, homeSun, workSun) {
 }
 
 function conditionFlags(hours, prefs, sun) {
-  const flags = { temp: false, wind: false, rain: false, fog: false, snow: false, storm: false, ice: false, dark: false };
+  const flags = { temp: false, wind: false, rain: false, fog: false, snow: false, storm: false, humidity: false, ice: false, dark: false };
   hours.forEach((hour) => {
     const [, category] = codeInfo(hour.weathercode);
     if (hour.temp < prefs.tempMin || hour.temp > prefs.tempMax) flags.temp = true;
@@ -229,6 +233,7 @@ function conditionFlags(hours, prefs, sun) {
     if (prefs.avoidRain && category !== "storm" && (category === "rain" || hour.precipProb >= prefs.rainProbThreshold)) flags.rain = true;
     if (prefs.avoidSnow && category === "snow") flags.snow = true;
     if (prefs.avoidFog && (category === "fog" || hour.visibilityMiles < prefs.minVisibilityMiles)) flags.fog = true;
+    if (prefs.avoidHumidity && hour.humidity > prefs.maxHumidity) flags.humidity = true;
     if (prefs.warnIceRisk && hour.temp <= 34) flags.ice = true;
     if (prefs.avoidDark && sun && (hour.iso < sun.sunriseIso || hour.iso > sun.sunsetIso)) flags.dark = true;
   });
@@ -268,6 +273,30 @@ function arcPath(cx, cy, r, t0, t1) {
   return `M ${x0} ${y0} A ${r} ${r} 0 ${largeArc} 1 ${x1} ${y1}`;
 }
 
+function rawHourFraction(iso, startHour, tickCount) {
+  const hh = parseInt(iso.slice(11, 13), 10);
+  const mm = parseInt(iso.slice(14, 16), 10);
+  return (hh + mm / 60 - startHour) / tickCount;
+}
+
+function clampedHourFraction(iso, hours) {
+  if (!iso || !hours.length) return null;
+  const f = rawHourFraction(iso, hours[0].hourNum, hours.length);
+  if (f < 0 || f > 1) return null;
+  return f;
+}
+
+function darknessGradient(sun, hours) {
+  if (!sun || !hours.length) return "none";
+  const startHour = hours[0].hourNum;
+  const sr = rawHourFraction(sun.sunriseIso, startHour, hours.length);
+  const ss = rawHourFraction(sun.sunsetIso, startHour, hours.length);
+  const dark = "rgba(0,0,0,0.45)";
+  const clear = "rgba(0,0,0,0)";
+  const pct = (f) => `${Math.max(-25, Math.min(125, f * 100)).toFixed(1)}%`;
+  return `linear-gradient(to right, ${dark} 0%, ${dark} ${pct(sr)}, ${clear} ${pct(sr + 0.02)}, ${clear} ${pct(ss - 0.02)}, ${dark} ${pct(ss)}, ${dark} 100%)`;
+}
+
 function computeDays(weather) {
   if (!weather) return [];
   const h = weather.hourly;
@@ -301,6 +330,7 @@ function computeDays(weather) {
       gust: h.windgusts_10m[i],
       visibilityMiles: h.visibility[i] / 1609.34,
       weathercode: h.weathercode[i],
+      humidity: h.relative_humidity_2m[i],
     });
   });
 
@@ -391,11 +421,11 @@ function LocationPicker({ value, onChange, allowCurrent = true }) {
     setResults([]);
     setErr(null);
     try {
-      const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query.trim())}&count=5&language=en&format=json`;
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query.trim())}&format=json&addressdetails=1&limit=5`;
       const res = await fetch(url);
       const json = await res.json();
-      if (!json.results || json.results.length === 0) setErr("No matching places found.");
-      setResults(json.results || []);
+      if (!json || json.length === 0) setErr("No matching places found.");
+      setResults(json || []);
     } catch (e) {
       setErr("Location search failed.");
     } finally {
@@ -445,7 +475,7 @@ function LocationPicker({ value, onChange, allowCurrent = true }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && search()}
-          placeholder="City, state or zip"
+          placeholder="Street address, city, or zip"
           className="flex-1 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400"
         />
         <button onClick={search} className="px-3 rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700">
@@ -465,13 +495,13 @@ function LocationPicker({ value, onChange, allowCurrent = true }) {
             <button
               key={i}
               onClick={() => {
-                onChange({ name: `${r.name}${r.admin1 ? ", " + r.admin1 : ""}`, lat: r.latitude, lon: r.longitude });
+                onChange({ name: r.display_name.split(",").slice(0, 3).join(",").trim(), lat: parseFloat(r.lat), lon: parseFloat(r.lon) });
                 setResults([]);
                 setQuery("");
               }}
               className="w-full text-left text-sm px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200"
             >
-              {r.name}{r.admin1 ? `, ${r.admin1}` : ""}{r.country ? `, ${r.country}` : ""}
+              {r.display_name}
             </button>
           ))}
         </div>
@@ -592,6 +622,7 @@ function WarningLights({ flags }) {
     { key: "fog", Icon: CloudFog, title: "Fog" },
     { key: "snow", Icon: CloudSnow, title: "Snow" },
     { key: "storm", Icon: CloudLightning, title: "Storm" },
+    { key: "humidity", Icon: Droplet, title: "Humidity" },
     { key: "ice", Icon: Snowflake, title: "Ice risk" },
     { key: "dark", Icon: Moon, title: "Darkness" },
   ];
@@ -725,7 +756,7 @@ function App() {
     try {
       const fetchOne = (loc) =>
         fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&hourly=temperature_2m,precipitation_probability,precipitation,windspeed_10m,windgusts_10m,visibility,weathercode&daily=sunrise,sunset&temperature_unit=fahrenheit&windspeed_unit=mph&timezone=auto&forecast_days=7`
+          `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&hourly=temperature_2m,precipitation_probability,precipitation,windspeed_10m,windgusts_10m,visibility,weathercode,relative_humidity_2m&daily=sunrise,sunset&temperature_unit=fahrenheit&windspeed_unit=mph&timezone=auto&forecast_days=7`
         ).then((r) => {
           if (!r.ok) throw new Error("bad response");
           return r.json();
@@ -845,6 +876,12 @@ function App() {
   const minTemp = hourEvals.length ? Math.min(...hourEvals.map((x) => x.hour.temp)) : 30;
   const tempRange = Math.max(maxTemp - minTemp, 1);
 
+  const gaugeHours = hourEvals.map((x) => x.hour);
+  const gaugeSun = activeDay ? activeDay.sun : null;
+  const gaugeGradient = darknessGradient(gaugeSun, gaugeHours);
+  const sunriseFrac = clampedHourFraction(gaugeSun && gaugeSun.sunriseIso, gaugeHours);
+  const sunsetFrac = clampedHourFraction(gaugeSun && gaugeSun.sunsetIso, gaugeHours);
+
   const inMorningWindow = (h) => hoursInWindow([h], prefs.morningStart, prefs.morningEnd).length > 0;
   const inEveningWindow = (h) => hoursInWindow([h], prefs.eveningStart, prefs.eveningEnd).length > 0;
 
@@ -950,6 +987,13 @@ function App() {
               <Toggle label="Avoid fog" checked={formPrefs.avoidFog} onChange={(v) => setFormPrefs({ ...formPrefs, avoidFog: v })} />
               {formPrefs.avoidFog && (
                 <NumberField label="Min visibility" unit="mi" value={formPrefs.minVisibilityMiles} onChange={(v) => setFormPrefs({ ...formPrefs, minVisibilityMiles: v })} min={0} max={10} step={0.5} />
+              )}
+            </SectionCard>
+
+            <SectionCard title="Humidity">
+              <Toggle label="Avoid high humidity" hint="Muggy air fogs visors and saps energy fast" checked={formPrefs.avoidHumidity} onChange={(v) => setFormPrefs({ ...formPrefs, avoidHumidity: v })} />
+              {formPrefs.avoidHumidity && (
+                <NumberField label="Max humidity" unit="%" value={formPrefs.maxHumidity} onChange={(v) => setFormPrefs({ ...formPrefs, maxHumidity: v })} min={0} max={100} step={5} />
               )}
             </SectionCard>
 
@@ -1089,16 +1133,25 @@ function App() {
                         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
                           <h3 className="text-xs font-semibold uppercase tracking-widest text-amber-400 mb-3">Hourly readout</h3>
                           <div className="overflow-x-auto">
-                            <div className="flex items-end gap-1 h-20 min-w-max">
-                              {hourEvals.map(({ hour, ev }, i) => {
-                                const pct = Math.max(((hour.temp - minTemp) / tempRange) * 100, 8);
-                                return (
-                                  <div key={i} className="flex flex-col items-center justify-end h-full w-3 shrink-0">
-                                    <div title={`${hour.hourLabel} — ${Math.round(hour.temp)}°F`} className={`w-2.5 rounded-t ${ev.good ? "bg-emerald-500" : "bg-red-500"}`} style={{ height: `${pct}%` }} />
-                                    <div className={`w-1 h-1 rounded-full mt-1 ${inMorningWindow(hour) || inEveningWindow(hour) ? "bg-amber-400" : "bg-transparent"}`} />
-                                  </div>
-                                );
-                              })}
+                            <div className="relative min-w-max">
+                              <div className="absolute inset-0 rounded-lg pointer-events-none" style={{ background: gaugeGradient }} />
+                              {sunriseFrac !== null && (
+                                <div className="absolute top-0 bottom-0 w-px bg-amber-400/70 pointer-events-none" style={{ left: `${sunriseFrac * 100}%` }} />
+                              )}
+                              {sunsetFrac !== null && (
+                                <div className="absolute top-0 bottom-0 w-px bg-amber-400/70 pointer-events-none" style={{ left: `${sunsetFrac * 100}%` }} />
+                              )}
+                              <div className="relative flex items-end gap-1 h-20">
+                                {hourEvals.map(({ hour, ev }, i) => {
+                                  const pct = Math.max(((hour.temp - minTemp) / tempRange) * 100, 8);
+                                  return (
+                                    <div key={i} className="flex flex-col items-center justify-end h-full w-3 shrink-0">
+                                      <div title={`${hour.hourLabel} — ${Math.round(hour.temp)}°F`} className={`w-2.5 rounded-t ${ev.good ? "bg-emerald-500" : "bg-red-500"}`} style={{ height: `${pct}%` }} />
+                                      <div className={`w-1 h-1 rounded-full mt-1 ${inMorningWindow(hour) || inEveningWindow(hour) ? "bg-amber-400" : "bg-transparent"}`} />
+                                    </div>
+                                  );
+                                })}
+                              </div>
                             </div>
                             <div className="flex gap-1 min-w-max mt-1">
                               {hourEvals.map(({ hour }, i) => (
@@ -1108,10 +1161,11 @@ function App() {
                               ))}
                             </div>
                           </div>
-                          <div className="flex items-center gap-4 mt-3 text-xs text-zinc-500">
+                          <div className="flex items-center gap-4 mt-3 text-xs text-zinc-500 flex-wrap">
                             <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Good</span>
                             <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500" /> Skip</span>
                             <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-amber-400" /> Commute window</span>
+                            <span className="flex items-center gap-1.5"><span className="w-0.5 h-2.5 bg-amber-400/70" /> Sunrise/sunset</span>
                           </div>
                         </div>
 
@@ -1122,6 +1176,9 @@ function App() {
                               <div key={i} className={`flex items-center gap-3 rounded-lg px-2.5 py-2 ${inMorningWindow(hour) || inEveningWindow(hour) ? "bg-zinc-800/70" : ""}`}>
                                 <span className="font-mono text-sm text-zinc-300 w-10 shrink-0">{hour.hourLabel}</span>
                                 <WeatherIcon category={ev.category} className="w-4 h-4 text-zinc-500 shrink-0" />
+                                {activeDay && activeDay.sun && (hour.iso < activeDay.sun.sunriseIso || hour.iso > activeDay.sun.sunsetIso) && (
+                                  <Moon className="w-3 h-3 text-zinc-600 shrink-0 -ml-1.5" />
+                                )}
                                 <span className="font-mono text-sm text-zinc-300 w-12 shrink-0">{Math.round(hour.temp)}°F</span>
                                 <span className="flex items-center gap-1 text-xs text-zinc-500 w-14 shrink-0">
                                   <Wind className="w-3 h-3" />{Math.round(hour.wind)}mph
