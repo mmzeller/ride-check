@@ -26,6 +26,8 @@
       repeating-linear-gradient(45deg, rgba(255,255,255,0.035) 0, rgba(255,255,255,0.035) 1px, transparent 1px, transparent 6px),
       repeating-linear-gradient(-45deg, rgba(255,255,255,0.035) 0, rgba(255,255,255,0.035) 1px, transparent 1px, transparent 6px);
   }
+  .safe-top { padding-top: calc(env(safe-area-inset-top, 0px) + 0.75rem); }
+  .safe-bottom-pad { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 2.5rem); }
 </style>
 </head>
 <body>
@@ -98,6 +100,7 @@ const DEFAULT_PREFS = {
   avoidSnow: true,
   avoidHumidity: true,
   maxHumidity: 75,
+  hideOvernight: true,
   warnIceRisk: true,
   avoidDark: true,
   morningStart: "07:30",
@@ -851,9 +854,15 @@ function App() {
     loadWeather(formLocations);
   };
 
-  const homeDays = useMemo(() => computeDays(weatherHome), [weatherHome]);
-  const workDays = useMemo(() => computeDays(weatherWork), [weatherWork]);
   const prefs = data ? data.prefs : DEFAULT_PREFS;
+  const homeDaysRaw = useMemo(() => computeDays(weatherHome), [weatherHome]);
+  const workDaysRaw = useMemo(() => computeDays(weatherWork), [weatherWork]);
+  const filterOvernight = (days) =>
+    prefs.hideOvernight
+      ? days.map((d) => ({ ...d, hours: d.hours.filter((h) => h.hourNum >= 5 && h.hourNum < 23) }))
+      : days;
+  const homeDays = filterOvernight(homeDaysRaw);
+  const workDays = filterOvernight(workDaysRaw);
   const hasWork = !!(data && data.locations && data.locations.work);
   const homeDay = homeDays[dayIndex] || homeDays[0];
   const workDay = hasWork && workDays[dayIndex] ? workDays[dayIndex] : homeDay;
@@ -921,8 +930,8 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans pb-10">
-      <header className="sticky top-0 z-10 bg-zinc-950/95 backdrop-blur border-b border-zinc-800 px-4 py-3 flex items-center justify-between gap-2">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans safe-bottom-pad">
+      <header className="sticky top-0 z-10 bg-zinc-950/95 backdrop-blur border-b border-zinc-800 px-4 pb-3 safe-top flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 shrink-0">
           <Bike className="w-5 h-5 text-amber-400" />
           <span className="font-mono font-bold tracking-widest text-sm">RIDE CHECK</span>
@@ -1000,6 +1009,7 @@ function App() {
             <SectionCard title="Other safety factors">
               <Toggle label="Warn about ice risk" hint="Flags hours at or below 34°F" checked={formPrefs.warnIceRisk} onChange={(v) => setFormPrefs({ ...formPrefs, warnIceRisk: v })} />
               <Toggle label="Avoid riding in the dark" hint="Uses sunrise/sunset for your home location" checked={formPrefs.avoidDark} onChange={(v) => setFormPrefs({ ...formPrefs, avoidDark: v })} />
+              <Toggle label="Hide overnight hours" hint="Removes 11pm–5am from every view" checked={formPrefs.hideOvernight} onChange={(v) => setFormPrefs({ ...formPrefs, hideOvernight: v })} />
             </SectionCard>
 
             {error && (
@@ -1172,28 +1182,30 @@ function App() {
                         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
                           <h3 className="text-xs font-semibold uppercase tracking-widest text-amber-400 mb-3">Hour by hour</h3>
                           <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
-                            {hourEvals.map(({ hour, ev }, i) => (
-                              <div key={i} className={`flex items-center gap-3 rounded-lg px-2.5 py-2 ${inMorningWindow(hour) || inEveningWindow(hour) ? "bg-zinc-800/70" : ""}`}>
-                                <span className="font-mono text-sm text-zinc-300 w-10 shrink-0">{hour.hourLabel}</span>
-                                <WeatherIcon category={ev.category} className="w-4 h-4 text-zinc-500 shrink-0" />
-                                {activeDay && activeDay.sun && (hour.iso < activeDay.sun.sunriseIso || hour.iso > activeDay.sun.sunsetIso) && (
-                                  <Moon className="w-3 h-3 text-zinc-600 shrink-0 -ml-1.5" />
-                                )}
-                                <span className="font-mono text-sm text-zinc-300 w-12 shrink-0">{Math.round(hour.temp)}°F</span>
-                                <span className="flex items-center gap-1 text-xs text-zinc-500 w-14 shrink-0">
-                                  <Wind className="w-3 h-3" />{Math.round(hour.wind)}mph
-                                </span>
-                                {ev.good ? (
-                                  <CheckCircle2 className="w-4 h-4 text-emerald-500 ml-auto shrink-0" />
-                                ) : (
-                                  <span className="ml-auto flex items-center gap-1.5 justify-end flex-wrap">
-                                    {ev.reasons.slice(0, 2).map((r, ri) => (
-                                      <span key={ri} className="text-xs text-red-300 bg-red-500/10 border border-red-900 rounded px-1.5 py-0.5">{r}</span>
-                                    ))}
-                                  </span>
-                                )}
-                              </div>
-                            ))}
+                            {hourEvals.map(({ hour, ev }, i) => {
+                              const isDark = activeDay && activeDay.sun && (hour.iso < activeDay.sun.sunriseIso || hour.iso > activeDay.sun.sunsetIso);
+                              return (
+                                <div key={i} className={`rounded-lg px-2 py-2 ${inMorningWindow(hour) || inEveningWindow(hour) ? "bg-zinc-800/70" : ""}`}>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-mono text-sm text-zinc-300 w-9 shrink-0">{hour.hourLabel}</span>
+                                    <WeatherIcon category={ev.category} className="w-4 h-4 text-zinc-500 shrink-0" />
+                                    {isDark && <Moon className="w-3 h-3 text-zinc-600 shrink-0" />}
+                                    <span className="font-mono text-sm text-zinc-300 w-11 shrink-0">{Math.round(hour.temp)}°F</span>
+                                    <span className="flex items-center gap-1 text-xs text-zinc-500 w-11 shrink-0">
+                                      <Wind className="w-3 h-3 shrink-0" />{Math.round(hour.wind)}
+                                    </span>
+                                    {ev.good && <CheckCircle2 className="w-4 h-4 text-emerald-500 ml-auto shrink-0" />}
+                                  </div>
+                                  {!ev.good && (
+                                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                      {ev.reasons.slice(0, 2).map((r, ri) => (
+                                        <span key={ri} className="text-xs text-red-300 bg-red-500/10 border border-red-900 rounded px-1.5 py-0.5">{r}</span>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       </>
