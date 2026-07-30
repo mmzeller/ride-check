@@ -87,6 +87,7 @@ const Snowflake = (p) => <IconBase className={p.className}><path d="M12 2v20M4.2
 const Droplet = (p) => <IconBase className={p.className}><path d="M12 2s7 7.5 7 12.5a7 7 0 1 1-14 0C5 9.5 12 2 12 2z"/></IconBase>;
 const STORAGE_KEY = "ride-check-data";
 const STORAGE_KEY_LOG = "ride-check-log";
+const STORAGE_KEY_DAYSOFF = "ride-check-days-off";
 
 const DEFAULT_PREFS = {
   tempMin: 45,
@@ -752,6 +753,7 @@ function App() {
   const [mainView, setMainView] = useState("daily");
   const [hourlyLoc, setHourlyLoc] = useState("home");
   const [rideLog, setRideLog] = useState({});
+  const [daysOff, setDaysOff] = useState({});
 
   const [formPrefs, setFormPrefs] = useState(DEFAULT_PREFS);
   const [formLocations, setFormLocations] = useState({ home: null, work: null });
@@ -801,6 +803,23 @@ function App() {
     });
   };
 
+  const persistDaysOff = async (map) => {
+    try {
+      await storage.set(STORAGE_KEY_DAYSOFF, JSON.stringify(map), false);
+    } catch (e) {
+      // best effort
+    }
+  };
+
+  const toggleDayOff = (dateKey) => {
+    if (!dateKey) return;
+    setDaysOff((prev) => {
+      const next = { ...prev, [dateKey]: !prev[dateKey] };
+      persistDaysOff(next);
+      return next;
+    });
+  };
+
   useEffect(() => {
     (async () => {
       try {
@@ -825,6 +844,12 @@ function App() {
         if (logRes && logRes.value) setRideLog(JSON.parse(logRes.value));
       } catch (e) {
         // no log yet
+      }
+      try {
+        const offRes = await storage.get(STORAGE_KEY_DAYSOFF, false);
+        if (offRes && offRes.value) setDaysOff(JSON.parse(offRes.value));
+      } catch (e) {
+        // none marked yet
       }
       setLoaded(true);
     })();
@@ -909,8 +934,10 @@ function App() {
   );
 
   const isWeekend = !!(homeDay && homeDay.isWeekend);
+  const isOff = !!(homeDay && daysOff[homeDay.date]);
+  const noCommute = isWeekend || isOff;
   const allWindowHours = [...morningWindowHours, ...eveningWindowHours];
-  const gearTempHours = isWeekend && homeDay ? homeDay.hours : allWindowHours;
+  const gearTempHours = noCommute && homeDay ? homeDay.hours : allWindowHours;
   const minWindowTemp = gearTempHours.length ? Math.min(...gearTempHours.map((h) => h.temp)) : null;
   const gear = gearSuggestion(minWindowTemp, warningFlags);
 
@@ -1117,21 +1144,32 @@ function App() {
 
                     <SunTimes sun={homeDay && homeDay.sun} />
 
+                    {!isWeekend && homeDay && (
+                      <button
+                        onClick={() => toggleDayOff(homeDay.date)}
+                        className={`w-full rounded-xl py-2 text-xs font-mono tracking-wide border ${isOff ? "bg-amber-500 text-zinc-950 border-amber-500 font-bold" : "bg-zinc-900 text-zinc-400 border-zinc-800"}`}
+                      >
+                        {isOff ? "OFF WORK THIS DAY — TAP TO UNDO" : "MARK AS DAY OFF"}
+                      </button>
+                    )}
+
                     {!homeDay || homeDay.hours.length === 0 ? (
                       <div className="text-center text-zinc-500 text-sm py-10">No more riding hours left today.</div>
                     ) : (
                       <>
-                        {!isWeekend && <RideGaugeCard score={rideScore} flags={warningFlags} />}
+                        {!noCommute && <RideGaugeCard score={rideScore} flags={warningFlags} />}
 
-                        {isWeekend && (
-                          <div className="text-center text-zinc-500 text-xs py-1">Weekend — no fixed commute. Check the free ride card and hourly details below.</div>
+                        {noCommute && (
+                          <div className="text-center text-zinc-500 text-xs py-1">
+                            {isWeekend ? "Weekend" : "Day off"} — no fixed commute. Check the free ride card and hourly details below.
+                          </div>
                         )}
 
                         {homeDay.isToday && freeRideHours.length > 0 && (
                           <CommuteCard label="Free ride" sublabel={`At ${data.locations.home.name}`} windowLabel="Next few hours" verdict={freeRideVerdict} />
                         )}
 
-                        {!isWeekend && (
+                        {!noCommute && (
                           <div className="space-y-3">
                             <CommuteCard label="Morning commute" sublabel={hasWork ? `At ${data.locations.home.name}` : null} windowLabel={`${prefs.morningStart} – ${prefs.morningEnd}`} verdict={morningVerdict} />
                             <CommuteCard label="Evening commute" sublabel={hasWork ? `At ${data.locations.work.name}` : null} windowLabel={`${prefs.eveningStart} – ${prefs.eveningEnd}`} verdict={eveningVerdict} />
