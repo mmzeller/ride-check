@@ -1161,7 +1161,10 @@ function App() {
 
                         {noCommute && (
                           <div className="text-center text-zinc-500 text-xs py-1">
-                            {isWeekend ? "Weekend" : "Day off"} — no fixed commute. Check the free ride card and hourly details below.
+                            {isWeekend ? "Weekend" : "Day off"} — no fixed commute.{" "}
+                            {homeDay.isToday && freeRideHours.length > 0
+                              ? "Check the free ride card and hourly details below."
+                              : "Check the hourly details below."}
                           </div>
                         )}
 
