@@ -344,9 +344,11 @@ function computeDays(weather) {
       const isToday = date === todayDateKey;
       const filteredHours = isToday ? hours.filter((x) => x.iso >= nowHourKey) : hours;
       const noon = new Date(date + "T12:00:00");
+      const dow = noon.getDay();
       return {
         date,
         isToday,
+        isWeekend: dow === 0 || dow === 6,
         dateLabel: noon.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" }),
         shortLabel: noon.toLocaleDateString([], { weekday: "short" }),
         hours: filteredHours,
@@ -906,8 +908,10 @@ function App() {
     conditionFlags(eveningWindowHours, prefs, workDay && workDay.sun)
   );
 
+  const isWeekend = !!(homeDay && homeDay.isWeekend);
   const allWindowHours = [...morningWindowHours, ...eveningWindowHours];
-  const minWindowTemp = allWindowHours.length ? Math.min(...allWindowHours.map((h) => h.temp)) : null;
+  const gearTempHours = isWeekend && homeDay ? homeDay.hours : allWindowHours;
+  const minWindowTemp = gearTempHours.length ? Math.min(...gearTempHours.map((h) => h.temp)) : null;
   const gear = gearSuggestion(minWindowTemp, warningFlags);
 
   const todayKey = homeDays[0] ? homeDays[0].date : null;
@@ -1117,16 +1121,22 @@ function App() {
                       <div className="text-center text-zinc-500 text-sm py-10">No more riding hours left today.</div>
                     ) : (
                       <>
-                        <RideGaugeCard score={rideScore} flags={warningFlags} />
+                        {!isWeekend && <RideGaugeCard score={rideScore} flags={warningFlags} />}
+
+                        {isWeekend && (
+                          <div className="text-center text-zinc-500 text-xs py-1">Weekend — no fixed commute. Check the free ride card and hourly details below.</div>
+                        )}
 
                         {homeDay.isToday && freeRideHours.length > 0 && (
                           <CommuteCard label="Free ride" sublabel={`At ${data.locations.home.name}`} windowLabel="Next few hours" verdict={freeRideVerdict} />
                         )}
 
-                        <div className="space-y-3">
-                          <CommuteCard label="Morning commute" sublabel={hasWork ? `At ${data.locations.home.name}` : null} windowLabel={`${prefs.morningStart} – ${prefs.morningEnd}`} verdict={morningVerdict} />
-                          <CommuteCard label="Evening commute" sublabel={hasWork ? `At ${data.locations.work.name}` : null} windowLabel={`${prefs.eveningStart} – ${prefs.eveningEnd}`} verdict={eveningVerdict} />
-                        </div>
+                        {!isWeekend && (
+                          <div className="space-y-3">
+                            <CommuteCard label="Morning commute" sublabel={hasWork ? `At ${data.locations.home.name}` : null} windowLabel={`${prefs.morningStart} – ${prefs.morningEnd}`} verdict={morningVerdict} />
+                            <CommuteCard label="Evening commute" sublabel={hasWork ? `At ${data.locations.work.name}` : null} windowLabel={`${prefs.eveningStart} – ${prefs.eveningEnd}`} verdict={eveningVerdict} />
+                          </div>
+                        )}
 
                         <GearCard gear={gear} />
 
