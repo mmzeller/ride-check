@@ -875,6 +875,9 @@ function App() {
     ? commuteVerdict(hoursInWindow(workDay.hours, prefs.eveningStart, prefs.eveningEnd), prefs, workDay.sun)
     : { status: "unknown", reasons: [] };
 
+  const freeRideHours = homeDay && homeDay.isToday ? homeDay.hours.slice(0, 3) : [];
+  const freeRideVerdict = commuteVerdict(freeRideHours, prefs, homeDay && homeDay.sun);
+
   const activeDay = hourlyLoc === "work" && hasWork && workDays[dayIndex] ? workDays[dayIndex] : homeDay;
 
   const hourEvals = useMemo(() => {
@@ -1115,6 +1118,10 @@ function App() {
                     ) : (
                       <>
                         <RideGaugeCard score={rideScore} flags={warningFlags} />
+
+                        {homeDay.isToday && freeRideHours.length > 0 && (
+                          <CommuteCard label="Free ride" sublabel={`At ${data.locations.home.name}`} windowLabel="Next few hours" verdict={freeRideVerdict} />
+                        )}
 
                         <div className="space-y-3">
                           <CommuteCard label="Morning commute" sublabel={hasWork ? `At ${data.locations.home.name}` : null} windowLabel={`${prefs.morningStart} – ${prefs.morningEnd}`} verdict={morningVerdict} />
