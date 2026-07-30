@@ -100,6 +100,7 @@ const DEFAULT_PREFS = {
   avoidSnow: true,
   avoidHumidity: true,
   maxHumidity: 75,
+  humidityTempThreshold: 70,
   hideOvernight: true,
   warnIceRisk: true,
   avoidDark: true,
@@ -187,7 +188,7 @@ function evaluateHour(hour, prefs, sun) {
   if (prefs.avoidFog && (category === "fog" || hour.visibilityMiles < prefs.minVisibilityMiles)) {
     reasons.push(`Visibility ${hour.visibilityMiles.toFixed(1)} mi`);
   }
-  if (prefs.avoidHumidity && hour.humidity > prefs.maxHumidity) reasons.push(`${hour.humidity}% humidity`);
+  if (prefs.avoidHumidity && hour.temp >= prefs.humidityTempThreshold && hour.humidity > prefs.maxHumidity) reasons.push(`${hour.humidity}% humidity`);
   if (prefs.warnIceRisk && hour.temp <= 34) reasons.push("Possible ice (≤34°F)");
   if (prefs.avoidDark && sun && (hour.iso < sun.sunriseIso || hour.iso > sun.sunsetIso)) {
     reasons.push("Outside daylight");
@@ -236,7 +237,7 @@ function conditionFlags(hours, prefs, sun) {
     if (prefs.avoidRain && category !== "storm" && (category === "rain" || hour.precipProb >= prefs.rainProbThreshold)) flags.rain = true;
     if (prefs.avoidSnow && category === "snow") flags.snow = true;
     if (prefs.avoidFog && (category === "fog" || hour.visibilityMiles < prefs.minVisibilityMiles)) flags.fog = true;
-    if (prefs.avoidHumidity && hour.humidity > prefs.maxHumidity) flags.humidity = true;
+    if (prefs.avoidHumidity && hour.temp >= prefs.humidityTempThreshold && hour.humidity > prefs.maxHumidity) flags.humidity = true;
     if (prefs.warnIceRisk && hour.temp <= 34) flags.ice = true;
     if (prefs.avoidDark && sun && (hour.iso < sun.sunriseIso || hour.iso > sun.sunsetIso)) flags.dark = true;
   });
@@ -1002,7 +1003,10 @@ function App() {
             <SectionCard title="Humidity">
               <Toggle label="Avoid high humidity" hint="Muggy air fogs visors and saps energy fast" checked={formPrefs.avoidHumidity} onChange={(v) => setFormPrefs({ ...formPrefs, avoidHumidity: v })} />
               {formPrefs.avoidHumidity && (
-                <NumberField label="Max humidity" unit="%" value={formPrefs.maxHumidity} onChange={(v) => setFormPrefs({ ...formPrefs, maxHumidity: v })} min={0} max={100} step={5} />
+                <>
+                  <NumberField label="Max humidity" unit="%" value={formPrefs.maxHumidity} onChange={(v) => setFormPrefs({ ...formPrefs, maxHumidity: v })} min={0} max={100} step={5} />
+                  <NumberField label="Only matters above" unit="°F" value={formPrefs.humidityTempThreshold} onChange={(v) => setFormPrefs({ ...formPrefs, humidityTempThreshold: v })} min={-20} max={130} />
+                </>
               )}
             </SectionCard>
 
