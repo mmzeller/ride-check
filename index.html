@@ -10,9 +10,9 @@
 <meta name="theme-color" content="#09090b" />
 <title>Ride Check</title>
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2309090b'/%3E%3Ccircle cx='50' cy='50' r='34' fill='none' stroke='%23f59e0b' stroke-width='6'/%3E%3Cpath d='M30 62 38 42h16l10 20' fill='none' stroke='%23f59e0b' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
-<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.26.9/babel.min.js" crossorigin="anonymous"></script>
 <style>
 /*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
 @layer properties{@supports (((-webkit-hyphens:none)) and (not (margin-trim:inline))) or ((-moz-orient:inline) and (not (color:rgb(from red r g b)))){*,:before,:after,::backdrop{--tw-translate-x:0;--tw-translate-y:0;--tw-translate-z:0;--tw-rotate-x:initial;--tw-rotate-y:initial;--tw-rotate-z:initial;--tw-skew-x:initial;--tw-skew-y:initial;--tw-space-y-reverse:0;--tw-border-style:solid;--tw-font-weight:initial;--tw-tracking:initial;--tw-ordinal:initial;--tw-slashed-zero:initial;--tw-numeric-figure:initial;--tw-numeric-spacing:initial;--tw-numeric-fraction:initial;--tw-shadow:0 0 #0000;--tw-shadow-color:initial;--tw-shadow-alpha:100%;--tw-inset-shadow:0 0 #0000;--tw-inset-shadow-color:initial;--tw-inset-shadow-alpha:100%;--tw-ring-color:initial;--tw-ring-shadow:0 0 #0000;--tw-inset-ring-color:initial;--tw-inset-ring-shadow:0 0 #0000;--tw-ring-inset:initial;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-offset-shadow:0 0 #0000;--tw-backdrop-blur:initial;--tw-backdrop-brightness:initial;--tw-backdrop-contrast:initial;--tw-backdrop-grayscale:initial;--tw-backdrop-hue-rotate:initial;--tw-backdrop-invert:initial;--tw-backdrop-opacity:initial;--tw-backdrop-saturate:initial;--tw-backdrop-sepia:initial}}}@layer theme{:root,:host{--font-sans:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";--font-mono:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;--color-red-300:oklch(80.8% .114 19.571);--color-red-400:oklch(70.4% .191 22.216);--color-red-500:oklch(63.7% .237 25.331);--color-red-800:oklch(44.4% .177 26.899);--color-red-900:oklch(39.6% .141 25.723);--color-amber-300:oklch(87.9% .169 91.605);--color-amber-400:oklch(82.8% .189 84.429);--color-amber-500:oklch(76.9% .188 70.08);--color-amber-900:oklch(41.4% .112 45.904);--color-emerald-400:oklch(76.5% .177 163.223);--color-emerald-500:oklch(69.6% .17 162.48);--color-emerald-700:oklch(50.8% .118 165.612);--color-emerald-800:oklch(43.2% .095 166.913);--color-zinc-100:oklch(96.7% .001 286.375);--color-zinc-200:oklch(92% .004 286.32);--color-zinc-300:oklch(87.1% .006 286.286);--color-zinc-400:oklch(70.5% .015 286.067);--color-zinc-500:oklch(55.2% .016 285.938);--color-zinc-600:oklch(44.2% .017 285.786);--color-zinc-700:oklch(37% .013 285.805);--color-zinc-800:oklch(27.4% .006 286.033);--color-zinc-900:oklch(21% .006 285.885);--color-zinc-950:oklch(14.1% .005 285.823);--spacing:.25rem;--container-md:28rem;--text-xs:.75rem;--text-xs--line-height:calc(1 / .75);--text-sm:.875rem;--text-sm--line-height:calc(1.25 / .875);--text-base:1rem;--text-base--line-height:calc(1.5 / 1);--text-lg:1.125rem;--text-lg--line-height:calc(1.75 / 1.125);--text-2xl:1.5rem;--text-2xl--line-height:calc(2 / 1.5);--font-weight-medium:500;--font-weight-semibold:600;--font-weight-bold:700;--tracking-wide:.025em;--tracking-wider:.05em;--tracking-widest:.1em;--radius-md:.375rem;--radius-lg:.5rem;--radius-xl:.75rem;--radius-2xl:1rem;--animate-spin:spin 1s linear infinite;--default-transition-duration:.15s;--default-transition-timing-function:cubic-bezier(.4, 0, .2, 1);--default-font-family:var(--font-sans);--default-mono-font-family:var(--font-mono)}}@layer base{*,:after,:before,::backdrop{box-sizing:border-box;border:0 solid;margin:0;padding:0}::file-selector-button{box-sizing:border-box;border:0 solid;margin:0;padding:0}html,:host{-webkit-text-size-adjust:100%;tab-size:4;line-height:1.5;font-family:var(--default-font-family,-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");font-feature-settings:var(--default-font-feature-settings,normal);font-variation-settings:var(--default-font-variation-settings,normal);-webkit-tap-highlight-color:transparent}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;-webkit-text-decoration:inherit;-webkit-text-decoration:inherit;-webkit-text-decoration:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,samp,pre{font-family:var(--default-mono-font-family,ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);font-feature-settings:var(--default-mono-font-feature-settings,normal);font-variation-settings:var(--default-mono-font-variation-settings,normal);font-size:1em}small{font-size:80%}sub,sup{vertical-align:baseline;font-size:75%;line-height:0;position:relative}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}:-moz-focusring:where(:not(iframe)){outline:auto}progress{vertical-align:baseline}summary{display:list-item}ol,ul,menu{list-style:none}img,svg,video,canvas,audio,iframe,embed,object{vertical-align:middle;display:block}img,video{max-width:100%;height:auto}button,input,select,optgroup,textarea{font:inherit;font-feature-settings:inherit;font-variation-settings:inherit;letter-spacing:inherit;color:inherit;opacity:1;background-color:#0000;border-radius:0}::file-selector-button{font:inherit;font-feature-settings:inherit;font-variation-settings:inherit;letter-spacing:inherit;color:inherit;opacity:1;background-color:#0000;border-radius:0}:where(select:is([multiple],[size])) optgroup{font-weight:bolder}:where(select:is([multiple],[size])) optgroup option{padding-inline-start:20px}::file-selector-button{margin-inline-end:4px}::placeholder{opacity:1}@supports (not ((-webkit-appearance:-apple-pay-button))) or (contain-intrinsic-size:1px){::placeholder{color:currentColor}@supports (color:color-mix(in lab, red, red)){::placeholder{color:color-mix(in oklab, currentcolor 50%, transparent)}}}textarea{resize:vertical}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-date-and-time-value{min-height:1lh;text-align:inherit}::-webkit-datetime-edit{display:inline-flex}::-webkit-datetime-edit-fields-wrapper{padding:0}::-webkit-datetime-edit{padding-block:0}::-webkit-datetime-edit-year-field{padding-block:0}::-webkit-datetime-edit-month-field{padding-block:0}::-webkit-datetime-edit-day-field{padding-block:0}::-webkit-datetime-edit-hour-field{padding-block:0}::-webkit-datetime-edit-minute-field{padding-block:0}::-webkit-datetime-edit-second-field{padding-block:0}::-webkit-datetime-edit-millisecond-field{padding-block:0}::-webkit-datetime-edit-meridiem-field{padding-block:0}::-webkit-calendar-picker-indicator{line-height:1}:-moz-ui-invalid{box-shadow:none}button,input:where([type=button],[type=reset],[type=submit]){appearance:button}::file-selector-button{appearance:button}::-webkit-inner-spin-button{height:auto}::-webkit-outer-spin-button{height:auto}[hidden]:where(:not([hidden=until-found])){display:none!important}}@layer components;@layer utilities{.pointer-events-none{pointer-events:none}.absolute{position:absolute}.fixed{position:fixed}.relative{position:relative}.sticky{position:sticky}.inset-0{inset:0}.top-0{top:0}.bottom-0{bottom:0}.z-10{z-index:10}.mx-auto{margin-inline:auto}.-mt-3{margin-top:calc(var(--spacing) * -3)}.mt-0{margin-top:0}.mt-0\.5{margin-top:calc(var(--spacing) * .5)}.mt-1{margin-top:var(--spacing)}.mt-1\.5{margin-top:calc(var(--spacing) * 1.5)}.mt-3{margin-top:calc(var(--spacing) * 3)}.mr-1{margin-right:var(--spacing)}.mb-1{margin-bottom:var(--spacing)}.mb-3{margin-bottom:calc(var(--spacing) * 3)}.ml-auto{margin-left:auto}.block{display:block}.flex{display:flex}.grid{display:grid}.inline{display:inline}.inline-block{display:inline-block}.inline-flex{display:inline-flex}.table{display:table}.h-1{height:var(--spacing)}.h-1\.5{height:calc(var(--spacing) * 1.5)}.h-2{height:calc(var(--spacing) * 2)}.h-2\.5{height:calc(var(--spacing) * 2.5)}.h-3{height:calc(var(--spacing) * 3)}.h-3\.5{height:calc(var(--spacing) * 3.5)}.h-4{height:calc(var(--spacing) * 4)}.h-5{height:calc(var(--spacing) * 5)}.h-6{height:calc(var(--spacing) * 6)}.h-11{height:calc(var(--spacing) * 11)}.h-20{height:calc(var(--spacing) * 20)}.h-full{height:100%}.max-h-96{max-height:calc(var(--spacing) * 96)}.min-h-screen{min-height:100vh}.w-0\.5{width:calc(var(--spacing) * .5)}.w-1{width:var(--spacing)}.w-1\.5{width:calc(var(--spacing) * 1.5)}.w-2{width:calc(var(--spacing) * 2)}.w-2\.5{width:calc(var(--spacing) * 2.5)}.w-3{width:calc(var(--spacing) * 3)}.w-3\.5{width:calc(var(--spacing) * 3.5)}.w-4{width:calc(var(--spacing) * 4)}.w-5{width:calc(var(--spacing) * 5)}.w-6{width:calc(var(--spacing) * 6)}.w-10{width:calc(var(--spacing) * 10)}.w-11{width:calc(var(--spacing) * 11)}.w-12{width:calc(var(--spacing) * 12)}.w-14{width:calc(var(--spacing) * 14)}.w-20{width:calc(var(--spacing) * 20)}.w-full{width:100%}.w-px{width:1px}.max-w-\[170px\]{max-width:170px}.max-w-md{max-width:var(--container-md)}.min-w-0{min-width:0}.min-w-max{min-width:max-content}.flex-1{flex:1}.shrink-0{flex-shrink:0}.translate-x-1{--tw-translate-x:var(--spacing);translate:var(--tw-translate-x) var(--tw-translate-y)}.translate-x-6{--tw-translate-x:calc(var(--spacing) * 6);translate:var(--tw-translate-x) var(--tw-translate-y)}.transform{transform:var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,)}.animate-spin{animation:var(--animate-spin)}.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-center{align-items:center}.items-end{align-items:flex-end}.items-start{align-items:flex-start}.justify-between{justify-content:space-between}.justify-center{justify-content:center}.justify-end{justify-content:flex-end}.gap-1{gap:var(--spacing)}.gap-1\.5{gap:calc(var(--spacing) * 1.5)}.gap-2{gap:calc(var(--spacing) * 2)}.gap-3{gap:calc(var(--spacing) * 3)}.gap-4{gap:calc(var(--spacing) * 4)}.gap-6{gap:calc(var(--spacing) * 6)}:where(.space-y-1>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(var(--spacing) * var(--tw-space-y-reverse));margin-block-end:calc(var(--spacing) * calc(1 - var(--tw-space-y-reverse)))}:where(.space-y-1\.5>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing) * 1.5) * var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing) * 1.5) * calc(1 - var(--tw-space-y-reverse)))}:where(.space-y-2>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing) * 2) * var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing) * 2) * calc(1 - var(--tw-space-y-reverse)))}:where(.space-y-3>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing) * 3) * var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing) * 3) * calc(1 - var(--tw-space-y-reverse)))}:where(.space-y-4>:not(:last-child)){--tw-space-y-reverse:0;margin-block-start:calc(calc(var(--spacing) * 4) * var(--tw-space-y-reverse));margin-block-end:calc(calc(var(--spacing) * 4) * calc(1 - var(--tw-space-y-reverse)))}.truncate{text-overflow:ellipsis;white-space:nowrap;overflow:hidden}.overflow-x-auto{overflow-x:auto}.overflow-y-auto{overflow-y:auto}.rounded{border-radius:.25rem}.rounded-2xl{border-radius:var(--radius-2xl)}.rounded-full{border-radius:3.40282e38px}.rounded-lg{border-radius:var(--radius-lg)}.rounded-md{border-radius:var(--radius-md)}.rounded-xl{border-radius:var(--radius-xl)}.rounded-t{border-top-left-radius:.25rem;border-top-right-radius:.25rem}.border{border-style:var(--tw-border-style);border-width:1px}.border-b{border-bottom-style:var(--tw-border-style);border-bottom-width:1px}.border-amber-500{border-color:var(--color-amber-500)}.border-amber-900\/60{border-color:#7b330699}@supports (color:color-mix(in lab, red, red)){.border-amber-900\/60{border-color:color-mix(in oklab, var(--color-amber-900) 60%, transparent)}}.border-emerald-700{border-color:var(--color-emerald-700)}.border-emerald-800{border-color:var(--color-emerald-800)}.border-red-800{border-color:var(--color-red-800)}.border-red-900{border-color:var(--color-red-900)}.border-zinc-600{border-color:var(--color-zinc-600)}.border-zinc-700{border-color:var(--color-zinc-700)}.border-zinc-800{border-color:var(--color-zinc-800)}.bg-amber-400{background-color:var(--color-amber-400)}.bg-amber-400\/70{background-color:#fcbb00b3}@supports (color:color-mix(in lab, red, red)){.bg-amber-400\/70{background-color:color-mix(in oklab, var(--color-amber-400) 70%, transparent)}}.bg-amber-500{background-color:var(--color-amber-500)}.bg-amber-500\/10{background-color:#f99c001a}@supports (color:color-mix(in lab, red, red)){.bg-amber-500\/10{background-color:color-mix(in oklab, var(--color-amber-500) 10%, transparent)}}.bg-amber-500\/20{background-color:#f99c0033}@supports (color:color-mix(in lab, red, red)){.bg-amber-500\/20{background-color:color-mix(in oklab, var(--color-amber-500) 20%, transparent)}}.bg-emerald-500{background-color:var(--color-emerald-500)}.bg-emerald-500\/10{background-color:#00bb7f1a}@supports (color:color-mix(in lab, red, red)){.bg-emerald-500\/10{background-color:color-mix(in oklab, var(--color-emerald-500) 10%, transparent)}}.bg-emerald-500\/15{background-color:#00bb7f26}@supports (color:color-mix(in lab, red, red)){.bg-emerald-500\/15{background-color:color-mix(in oklab, var(--color-emerald-500) 15%, transparent)}}.bg-red-500{background-color:var(--color-red-500)}.bg-red-500\/10{background-color:#fb2c361a}@supports (color:color-mix(in lab, red, red)){.bg-red-500\/10{background-color:color-mix(in oklab, var(--color-red-500) 10%, transparent)}}.bg-transparent{background-color:#0000}.bg-zinc-700{background-color:var(--color-zinc-700)}.bg-zinc-800{background-color:var(--color-zinc-800)}.bg-zinc-800\/40{background-color:#27272a66}@supports (color:color-mix(in lab, red, red)){.bg-zinc-800\/40{background-color:color-mix(in oklab, var(--color-zinc-800) 40%, transparent)}}.bg-zinc-800\/60{background-color:#27272a99}@supports (color:color-mix(in lab, red, red)){.bg-zinc-800\/60{background-color:color-mix(in oklab, var(--color-zinc-800) 60%, transparent)}}.bg-zinc-800\/70{background-color:#27272ab3}@supports (color:color-mix(in lab, red, red)){.bg-zinc-800\/70{background-color:color-mix(in oklab, var(--color-zinc-800) 70%, transparent)}}.bg-zinc-900{background-color:var(--color-zinc-900)}.bg-zinc-950{background-color:var(--color-zinc-950)}.bg-zinc-950\/95{background-color:#09090bf2}@supports (color:color-mix(in lab, red, red)){.bg-zinc-950\/95{background-color:color-mix(in oklab, var(--color-zinc-950) 95%, transparent)}}.p-1{padding:var(--spacing)}.p-1\.5{padding:calc(var(--spacing) * 1.5)}.p-4{padding:calc(var(--spacing) * 4)}.px-1{padding-inline:var(--spacing)}.px-1\.5{padding-inline:calc(var(--spacing) * 1.5)}.px-2{padding-inline:calc(var(--spacing) * 2)}.px-3{padding-inline:calc(var(--spacing) * 3)}.px-4{padding-inline:calc(var(--spacing) * 4)}.px-5{padding-inline:calc(var(--spacing) * 5)}.py-0{padding-block:0}.py-0\.5{padding-block:calc(var(--spacing) * .5)}.py-1{padding-block:var(--spacing)}.py-1\.5{padding-block:calc(var(--spacing) * 1.5)}.py-2{padding-block:calc(var(--spacing) * 2)}.py-2\.5{padding-block:calc(var(--spacing) * 2.5)}.py-3{padding-block:calc(var(--spacing) * 3)}.py-4{padding-block:calc(var(--spacing) * 4)}.py-10{padding-block:calc(var(--spacing) * 10)}.py-20{padding-block:calc(var(--spacing) * 20)}.pt-1{padding-top:var(--spacing)}.pr-1{padding-right:var(--spacing)}.pb-3{padding-bottom:calc(var(--spacing) * 3)}.pb-10{padding-bottom:calc(var(--spacing) * 10)}.text-center{text-align:center}.text-left{text-align:left}.font-mono{font-family:var(--font-mono)}.font-sans{font-family:var(--font-sans)}.text-2xl{font-size:var(--text-2xl);line-height:var(--tw-leading,var(--text-2xl--line-height))}.text-base{font-size:var(--text-base);line-height:var(--tw-leading,var(--text-base--line-height))}.text-lg{font-size:var(--text-lg);line-height:var(--tw-leading,var(--text-lg--line-height))}.text-sm{font-size:var(--text-sm);line-height:var(--tw-leading,var(--text-sm--line-height))}.text-xs{font-size:var(--text-xs);line-height:var(--tw-leading,var(--text-xs--line-height))}.font-bold{--tw-font-weight:var(--font-weight-bold);font-weight:var(--font-weight-bold)}.font-medium{--tw-font-weight:var(--font-weight-medium);font-weight:var(--font-weight-medium)}.font-semibold{--tw-font-weight:var(--font-weight-semibold);font-weight:var(--font-weight-semibold)}.tracking-wide{--tw-tracking:var(--tracking-wide);letter-spacing:var(--tracking-wide)}.tracking-wider{--tw-tracking:var(--tracking-wider);letter-spacing:var(--tracking-wider)}.tracking-widest{--tw-tracking:var(--tracking-widest);letter-spacing:var(--tracking-widest)}.text-amber-300{color:var(--color-amber-300)}.text-amber-400{color:var(--color-amber-400)}.text-emerald-400{color:var(--color-emerald-400)}.text-emerald-500{color:var(--color-emerald-500)}.text-red-300{color:var(--color-red-300)}.text-red-400{color:var(--color-red-400)}.text-zinc-100{color:var(--color-zinc-100)}.text-zinc-200{color:var(--color-zinc-200)}.text-zinc-300{color:var(--color-zinc-300)}.text-zinc-400{color:var(--color-zinc-400)}.text-zinc-500{color:var(--color-zinc-500)}.text-zinc-600{color:var(--color-zinc-600)}.text-zinc-700{color:var(--color-zinc-700)}.text-zinc-950{color:var(--color-zinc-950)}.uppercase{text-transform:uppercase}.tabular-nums{--tw-numeric-spacing:tabular-nums;font-variant-numeric:var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,) var(--tw-numeric-fraction,)}.placeholder-zinc-600::placeholder{color:var(--color-zinc-600)}.shadow-\[inset_0_1px_0_rgba\(255\,255\,255\,0\.04\)\]{--tw-shadow:inset 0 1px 0 var(--tw-shadow-color,#ffffff0a);box-shadow:var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)}.backdrop-blur{--tw-backdrop-blur:blur(8px);-webkit-backdrop-filter:var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,);backdrop-filter:var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,) var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,) var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,)}.transition-colors{transition-property:color,background-color,border-color,outline-color,text-decoration-color,fill,stroke,--tw-gradient-from,--tw-gradient-via,--tw-gradient-to;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.transition-transform{transition-property:transform,translate,scale,rotate;transition-timing-function:var(--tw-ease,var(--default-transition-timing-function));transition-duration:var(--tw-duration,var(--default-transition-duration))}.focus-within\:border-amber-400:focus-within{border-color:var(--color-amber-400)}.focus-within\:ring-2:focus-within{--tw-ring-shadow:var(--tw-ring-inset,) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color,currentcolor);box-shadow:var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)}.focus-within\:ring-amber-400:focus-within{--tw-ring-color:var(--color-amber-400)}@media (hover:hover){.hover\:border-zinc-700:hover{border-color:var(--color-zinc-700)}.hover\:bg-amber-400:hover{background-color:var(--color-amber-400)}.hover\:bg-zinc-700:hover{background-color:var(--color-zinc-700)}.hover\:bg-zinc-800:hover{background-color:var(--color-zinc-800)}.hover\:text-amber-300:hover{color:var(--color-amber-300)}.hover\:text-zinc-200:hover{color:var(--color-zinc-200)}.hover\:text-zinc-300:hover{color:var(--color-zinc-300)}}.focus\:border-amber-400:focus{border-color:var(--color-amber-400)}.focus\:ring-2:focus{--tw-ring-shadow:var(--tw-ring-inset,) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color,currentcolor);box-shadow:var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow)}.focus\:ring-amber-400:focus{--tw-ring-color:var(--color-amber-400)}.focus\:outline-none:focus{--tw-outline-style:none;outline-style:none}}@property --tw-translate-x{syntax:"*";inherits:false;initial-value:0}@property --tw-translate-y{syntax:"*";inherits:false;initial-value:0}@property --tw-translate-z{syntax:"*";inherits:false;initial-value:0}@property --tw-rotate-x{syntax:"*";inherits:false}@property --tw-rotate-y{syntax:"*";inherits:false}@property --tw-rotate-z{syntax:"*";inherits:false}@property --tw-skew-x{syntax:"*";inherits:false}@property --tw-skew-y{syntax:"*";inherits:false}@property --tw-space-y-reverse{syntax:"*";inherits:false;initial-value:0}@property --tw-border-style{syntax:"*";inherits:false;initial-value:solid}@property --tw-font-weight{syntax:"*";inherits:false}@property --tw-tracking{syntax:"*";inherits:false}@property --tw-ordinal{syntax:"*";inherits:false}@property --tw-slashed-zero{syntax:"*";inherits:false}@property --tw-numeric-figure{syntax:"*";inherits:false}@property --tw-numeric-spacing{syntax:"*";inherits:false}@property --tw-numeric-fraction{syntax:"*";inherits:false}@property --tw-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-shadow-color{syntax:"*";inherits:false}@property --tw-shadow-alpha{syntax:"<percentage>";inherits:false;initial-value:100%}@property --tw-inset-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-inset-shadow-color{syntax:"*";inherits:false}@property --tw-inset-shadow-alpha{syntax:"<percentage>";inherits:false;initial-value:100%}@property --tw-ring-color{syntax:"*";inherits:false}@property --tw-ring-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-inset-ring-color{syntax:"*";inherits:false}@property --tw-inset-ring-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-ring-inset{syntax:"*";inherits:false}@property --tw-ring-offset-width{syntax:"<length>";inherits:false;initial-value:0}@property --tw-ring-offset-color{syntax:"*";inherits:false;initial-value:#fff}@property --tw-ring-offset-shadow{syntax:"*";inherits:false;initial-value:0 0 #0000}@property --tw-backdrop-blur{syntax:"*";inherits:false}@property --tw-backdrop-brightness{syntax:"*";inherits:false}@property --tw-backdrop-contrast{syntax:"*";inherits:false}@property --tw-backdrop-grayscale{syntax:"*";inherits:false}@property --tw-backdrop-hue-rotate{syntax:"*";inherits:false}@property --tw-backdrop-invert{syntax:"*";inherits:false}@property --tw-backdrop-opacity{syntax:"*";inherits:false}@property --tw-backdrop-saturate{syntax:"*";inherits:false}@property --tw-backdrop-sepia{syntax:"*";inherits:false}@keyframes spin{to{transform:rotate(360deg)}}
@@ -28,14 +28,90 @@
   }
   .safe-top { padding-top: calc(env(safe-area-inset-top, 0px) + 0.75rem); }
   .safe-bottom-pad { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 2.5rem); }
+  .ride-score-card { padding-bottom: 1.15rem; }
+  .ride-score-title { margin-bottom: 0.5rem; }
+  .ride-score-label {
+    margin-top: 0.35rem;
+    margin-bottom: 1.35rem;
+  }
+  .hour-reason-pill {
+    max-width: 9.5rem;
+    flex-shrink: 1;
+  }
+  .indicator-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem 0.85rem;
+    justify-items: center;
+    width: 100%;
+    max-width: 13.5rem;
+    margin-left: auto;
+    margin-right: auto;
+    padding-top: 0.15rem;
+  }
+  .indicator-bubble {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    z-index: 20;
+    padding: 0.35rem 0.7rem;
+    font-size: 0.75rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    color: #09090b;
+    background: #fbbf24;
+    pointer-events: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.45), 0 0 0 1px rgba(251,191,36,0.35);
+    animation: liquid-pop 0.48s cubic-bezier(0.34, 1.45, 0.64, 1) both;
+  }
+  .indicator-bubble-tail {
+    position: absolute;
+    left: 50%;
+    bottom: -5px;
+    width: 10px;
+    height: 10px;
+    margin-left: -5px;
+    background: #fbbf24;
+    border-radius: 2px;
+    transform: rotate(45deg);
+  }
+  @keyframes liquid-pop {
+    0% {
+      opacity: 0;
+      transform: translateX(-50%) translateY(10px) scale(0.35);
+      border-radius: 50%;
+      filter: blur(1px);
+    }
+    35% {
+      opacity: 1;
+      border-radius: 42% 58% 52% 48% / 58% 42% 58% 42%;
+      filter: blur(0);
+    }
+    55% {
+      transform: translateX(-50%) translateY(-3px) scale(1.08);
+      border-radius: 58% 42% 48% 52% / 42% 58% 42% 58%;
+    }
+    75% {
+      transform: translateX(-50%) translateY(1px) scale(0.97);
+      border-radius: 48% 52% 55% 45% / 52% 48% 45% 55%;
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0) scale(1);
+      border-radius: 9999px;
+      filter: blur(0);
+    }
+  }
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/plain" id="app-source">
-const { useState, useEffect, useMemo, useCallback } = React;
+const { useState, useEffect, useMemo, useCallback, useRef } = React;
 
-// Local storage shim so saved data lives in the browser, not Claude's sandbox
+// Local storage shim — data lives in the browser
 const storage = {
   get: async (key) => {
     try {
@@ -55,9 +131,9 @@ const storage = {
   },
 };
 
-// Minimal inline icon set (no external icon library needed)
+// Minimal inline icon set
 const IconBase = ({ children, className }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
     {children}
   </svg>
 );
@@ -65,7 +141,7 @@ const Bike = (p) => <IconBase className={p.className}><circle cx="6" cy="17" r="
 const Settings2 = (p) => <IconBase className={p.className}><path d="M4 6h6"/><path d="M14 6h6"/><circle cx="12" cy="6" r="2"/><path d="M4 12h2"/><path d="M10 12h10"/><circle cx="7" cy="12" r="2"/><path d="M4 18h10"/><path d="M18 18h2"/><circle cx="16" cy="18" r="2"/></IconBase>;
 const MapPin = (p) => <IconBase className={p.className}><path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></IconBase>;
 const Search = (p) => <IconBase className={p.className}><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></IconBase>;
-const Loader2 = (p) => <IconBase className={p.className}><path d="M12 3a9 9 0 1 0 9 9"/></IconBase>;
+const Loader2 = (p) => <IconBase className={p.className}><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 2a10 10 0 0 1 10 10" opacity="0.25"/></IconBase>;
 const CheckCircle2 = (p) => <IconBase className={p.className}><circle cx="12" cy="12" r="9"/><path d="m9 12 2 2 4-4"/></IconBase>;
 const XCircle = (p) => <IconBase className={p.className}><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6"/><path d="m15 9-6 6"/></IconBase>;
 const Sun = (p) => <IconBase className={p.className}><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></IconBase>;
@@ -85,9 +161,12 @@ const Thermometer = (p) => <IconBase className={p.className}><path d="M14 4v10.5
 const Moon = (p) => <IconBase className={p.className}><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></IconBase>;
 const Snowflake = (p) => <IconBase className={p.className}><path d="M12 2v20M4.2 7l15.6 10M4.2 17l15.6-10"/></IconBase>;
 const Droplet = (p) => <IconBase className={p.className}><path d="M12 2s7 7.5 7 12.5a7 7 0 1 1-14 0C5 9.5 12 2 12 2z"/></IconBase>;
+const RefreshCw = (p) => <IconBase className={p.className}><path d="M3 12a9 9 0 0 1 15.5-6.4"/><path d="M21 3v6h-6"/><path d="M21 12a9 9 0 0 1-15.5 6.4"/><path d="M3 21v-6h6"/></IconBase>;
+
 const STORAGE_KEY = "ride-check-data";
 const STORAGE_KEY_LOG = "ride-check-log";
 const STORAGE_KEY_DAYSOFF = "ride-check-days-off";
+const REFRESH_MS = 30 * 60 * 1000;
 
 const DEFAULT_PREFS = {
   tempMin: 45,
@@ -109,6 +188,7 @@ const DEFAULT_PREFS = {
   morningEnd: "08:30",
   eveningStart: "17:00",
   eveningEnd: "18:00",
+  units: "imperial", // imperial | metric
 };
 
 const WEATHER_CODES = {
@@ -135,6 +215,16 @@ function WeatherIcon({ category, className }) {
   };
   const Icon = map[category] || Cloud;
   return <Icon className={className} />;
+}
+
+function isNum(v) {
+  return typeof v === "number" && !Number.isNaN(v);
+}
+
+function timeToMinutes(t) {
+  if (!t || typeof t !== "string") return 0;
+  const [h, m] = t.split(":").map(Number);
+  return (h || 0) * 60 + (m || 0);
 }
 
 function fmtHour12(hourNum) {
@@ -173,48 +263,160 @@ function nowKeyForTz(tz) {
   }
 }
 
+function labelPartsInTz(dateKey, tz) {
+  try {
+    const d = new Date(dateKey + "T12:00:00Z");
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      weekday: "long",
+      month: "short",
+      day: "numeric",
+    }).formatToParts(d);
+    const get = (type) => parts.find((p) => p.type === type)?.value || "";
+    const weekday = get("weekday");
+    const short = new Intl.DateTimeFormat("en-US", { timeZone: tz, weekday: "short" }).format(d);
+    const isWeekend = weekday === "Saturday" || weekday === "Sunday";
+    return {
+      dateLabel: `${weekday}, ${get("month")} ${get("day")}`,
+      shortLabel: short,
+      isWeekend,
+    };
+  } catch (e) {
+    const noon = new Date(dateKey + "T12:00:00Z");
+    return {
+      dateLabel: noon.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", timeZone: "UTC" }),
+      shortLabel: noon.toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" }),
+      isWeekend: [0, 6].includes(noon.getUTCDay()),
+    };
+  }
+}
+
+/** Forecast hour H represents [H:00, H+1:00). Overlap with [start, end); supports overnight. */
+function hoursInWindow(hours, start, end) {
+  if (!hours || !hours.length) return [];
+  const s = timeToMinutes(start);
+  let e = timeToMinutes(end);
+  if (e === s) e = s + 60; // zero-length → treat as one hour
+  const overnight = e < s;
+  if (overnight) e += 24 * 60;
+
+  const overlaps = (a0, a1, b0, b1) => a0 < b1 && b0 < a1;
+
+  return hours.filter((h) => {
+    const hs = h.hourNum * 60;
+    const he = hs + 60;
+    if (overlaps(hs, he, s, e)) return true;
+    if (overnight && overlaps(hs + 1440, he + 1440, s, e)) return true;
+    // also allow hour on previous calendar sense when window crosses midnight
+    if (overnight && overlaps(hs - 1440, he - 1440, s, e)) return true;
+    return false;
+  });
+}
+
+function isoToMinutes(iso) {
+  if (!iso || iso.length < 16) return null;
+  const hh = parseInt(iso.slice(11, 13), 10);
+  const mm = parseInt(iso.slice(14, 16), 10);
+  if (Number.isNaN(hh) || Number.isNaN(mm)) return null;
+  return hh * 60 + mm;
+}
+
+/** Softer dark check: hour is "dark" if its midpoint is outside daylight. */
+function hourIsDark(hour, sun) {
+  if (!sun || !sun.sunriseIso || !sun.sunsetIso) return false;
+  const mid = hour.hourNum * 60 + 30;
+  const sr = isoToMinutes(sun.sunriseIso);
+  const ss = isoToMinutes(sun.sunsetIso);
+  if (sr == null || ss == null) return false;
+  return mid < sr || mid > ss;
+}
+
 function evaluateHour(hour, prefs, sun) {
   const reasons = [];
   const [, category] = codeInfo(hour.weathercode);
+  const metric = prefs.units === "metric";
 
-  if (hour.temp < prefs.tempMin) reasons.push(`Too cold (${Math.round(hour.temp)}°F)`);
-  if (hour.temp > prefs.tempMax) reasons.push(`Too hot (${Math.round(hour.temp)}°F)`);
-  if (hour.wind > prefs.maxWind) reasons.push(`Wind ${Math.round(hour.wind)} mph`);
-  if (hour.gust > prefs.maxGust) reasons.push(`Gusts ${Math.round(hour.gust)} mph`);
+  if (isNum(hour.temp)) {
+    if (hour.temp < prefs.tempMin) {
+      reasons.push(`Too cold (${Math.round(hour.temp)}°${metric ? "C" : "F"})`);
+    }
+    if (hour.temp > prefs.tempMax) {
+      reasons.push(`Too hot (${Math.round(hour.temp)}°${metric ? "C" : "F"})`);
+    }
+  }
+
+  const windUnit = metric ? "km/h" : "mph";
+  if (isNum(hour.wind) && hour.wind > prefs.maxWind) {
+    reasons.push(`Wind ${Math.round(hour.wind)} ${windUnit}`);
+  }
+  if (isNum(hour.gust) && hour.gust > prefs.maxGust) {
+    reasons.push(`Gusts ${Math.round(hour.gust)} ${windUnit}`);
+  }
+
   if (category === "storm") reasons.push("Thunderstorm");
-  if (prefs.avoidRain && category !== "storm" && (category === "rain" || hour.precipProb >= prefs.rainProbThreshold)) {
-    reasons.push(hour.precipProb >= prefs.rainProbThreshold ? `${hour.precipProb}% rain chance` : "Rain expected");
+
+  if (prefs.avoidRain && category !== "storm") {
+    const rainy = category === "rain";
+    const probHit = isNum(hour.precipProb) && hour.precipProb >= prefs.rainProbThreshold;
+    if (rainy || probHit) {
+      reasons.push(probHit ? `${hour.precipProb}% rain chance` : "Rain expected");
+    }
   }
+
   if (prefs.avoidSnow && category === "snow") reasons.push("Snow expected");
-  if (prefs.avoidFog && (category === "fog" || hour.visibilityMiles < prefs.minVisibilityMiles)) {
-    reasons.push(`Visibility ${hour.visibilityMiles.toFixed(1)} mi`);
+
+  if (prefs.avoidFog) {
+    const foggy = category === "fog";
+    // prefs.minVisibilityMiles holds miles (imperial) or km (metric); hourly value is always miles
+    const minVisMiles = metric ? prefs.minVisibilityMiles / 1.60934 : prefs.minVisibilityMiles;
+    const lowVis = isNum(hour.visibilityMiles) && hour.visibilityMiles < minVisMiles;
+    if (foggy || lowVis) {
+      const vis = isNum(hour.visibilityMiles)
+        ? (metric ? `${(hour.visibilityMiles * 1.60934).toFixed(1)} km` : `${hour.visibilityMiles.toFixed(1)} mi`)
+        : "low";
+      reasons.push(`Visibility ${vis}`);
+    }
   }
-  if (prefs.avoidHumidity && hour.temp >= prefs.humidityTempThreshold && hour.humidity > prefs.maxHumidity) reasons.push(`${hour.humidity}% humidity`);
-  if (prefs.warnIceRisk && hour.temp <= 34) reasons.push("Possible ice (≤34°F)");
-  if (prefs.avoidDark && sun && (hour.iso < sun.sunriseIso || hour.iso > sun.sunsetIso)) {
+
+  if (
+    prefs.avoidHumidity &&
+    isNum(hour.temp) &&
+    isNum(hour.humidity) &&
+    hour.temp >= prefs.humidityTempThreshold &&
+    hour.humidity > prefs.maxHumidity
+  ) {
+    reasons.push(`${hour.humidity}% humidity`);
+  }
+
+  if (prefs.warnIceRisk && isNum(hour.temp)) {
+    const freezeF = metric ? hour.temp <= 1 : hour.temp <= 34;
+    if (freezeF) {
+      const wet = isNum(hour.precip) && hour.precip > 0;
+      reasons.push(wet ? "Ice risk (wet + freeze)" : metric ? "Possible ice (≤1°C)" : "Possible ice (≤34°F)");
+    }
+  }
+
+  if (prefs.avoidDark && sun && hourIsDark(hour, sun)) {
     reasons.push("Outside daylight");
   }
 
   return { good: reasons.length === 0, reasons, category };
 }
 
-function hoursInWindow(hours, start, end) {
-  const [sh] = start.split(":").map(Number);
-  const [eh, em] = end.split(":").map(Number);
-  const endHour = em > 0 ? eh : Math.max(eh - 1, sh);
-  return hours.filter((h) => h.hourNum >= sh && h.hourNum <= endHour);
-}
-
 function commuteVerdict(hours, prefs, sun) {
-  if (hours.length === 0) return { status: "unknown", reasons: [] };
+  if (!hours || hours.length === 0) return { status: "unknown", reasons: [], score: null };
   const evals = hours.map((h) => evaluateHour(h, prefs, sun));
-  const good = evals.every((e) => e.good);
+  const goodCount = evals.filter((e) => e.good).length;
+  const score = Math.round((goodCount / evals.length) * 100);
   const reasons = [...new Set(evals.flatMap((e) => e.reasons))];
-  return { status: good ? "good" : "bad", reasons };
+  // Align with gauge: GO ≥ 90, CAUTION 50–89 shown as soft bad, NO-GO < 50
+  // Commute cards stay binary: GO only if every hour is good (strict safety)
+  const good = evals.every((e) => e.good);
+  return { status: good ? "good" : "bad", reasons, score };
 }
 
 function scoreFromHours(hours, prefs, sun) {
-  if (!hours.length) return null;
+  if (!hours || !hours.length) return null;
   const goodCount = hours.filter((h) => evaluateHour(h, prefs, sun).good).length;
   return { good: goodCount, total: hours.length };
 }
@@ -230,17 +432,22 @@ function computeRideScore(morningHours, eveningHours, prefs, homeSun, workSun) {
 
 function conditionFlags(hours, prefs, sun) {
   const flags = { temp: false, wind: false, rain: false, fog: false, snow: false, storm: false, humidity: false, ice: false, dark: false };
+  if (!hours) return flags;
+  const metric = prefs.units === "metric";
   hours.forEach((hour) => {
     const [, category] = codeInfo(hour.weathercode);
-    if (hour.temp < prefs.tempMin || hour.temp > prefs.tempMax) flags.temp = true;
-    if (hour.wind > prefs.maxWind || hour.gust > prefs.maxGust) flags.wind = true;
+    if (isNum(hour.temp) && (hour.temp < prefs.tempMin || hour.temp > prefs.tempMax)) flags.temp = true;
+    if ((isNum(hour.wind) && hour.wind > prefs.maxWind) || (isNum(hour.gust) && hour.gust > prefs.maxGust)) flags.wind = true;
     if (category === "storm") flags.storm = true;
-    if (prefs.avoidRain && category !== "storm" && (category === "rain" || hour.precipProb >= prefs.rainProbThreshold)) flags.rain = true;
+    if (prefs.avoidRain && category !== "storm" && (category === "rain" || (isNum(hour.precipProb) && hour.precipProb >= prefs.rainProbThreshold))) flags.rain = true;
     if (prefs.avoidSnow && category === "snow") flags.snow = true;
-    if (prefs.avoidFog && (category === "fog" || hour.visibilityMiles < prefs.minVisibilityMiles)) flags.fog = true;
-    if (prefs.avoidHumidity && hour.temp >= prefs.humidityTempThreshold && hour.humidity > prefs.maxHumidity) flags.humidity = true;
-    if (prefs.warnIceRisk && hour.temp <= 34) flags.ice = true;
-    if (prefs.avoidDark && sun && (hour.iso < sun.sunriseIso || hour.iso > sun.sunsetIso)) flags.dark = true;
+    {
+      const minVisMiles = metric ? prefs.minVisibilityMiles / 1.60934 : prefs.minVisibilityMiles;
+      if (prefs.avoidFog && (category === "fog" || (isNum(hour.visibilityMiles) && hour.visibilityMiles < minVisMiles))) flags.fog = true;
+    }
+    if (prefs.avoidHumidity && isNum(hour.temp) && isNum(hour.humidity) && hour.temp >= prefs.humidityTempThreshold && hour.humidity > prefs.maxHumidity) flags.humidity = true;
+    if (prefs.warnIceRisk && isNum(hour.temp) && (metric ? hour.temp <= 1 : hour.temp <= 34)) flags.ice = true;
+    if (prefs.avoidDark && sun && hourIsDark(hour, sun)) flags.dark = true;
   });
   return flags;
 }
@@ -251,19 +458,35 @@ function mergeFlags(a, b) {
   return out;
 }
 
-function gearSuggestion(temp, flags) {
-  if (temp === null || temp === undefined) return null;
+function gearSuggestion(temp, maxTemp, flags, metric) {
+  if (!isNum(temp)) return null;
   let jacket, gloves;
   const extra = [];
-  if (temp < 32) { jacket = "Insulated/heated suit"; gloves = "Insulated winter gloves"; extra.push("Balaclava or neck gaiter"); }
-  else if (temp < 45) { jacket = "Insulated jacket + thermal liner"; gloves = "Winter gloves"; extra.push("Neck gaiter"); }
-  else if (temp < 60) { jacket = "Mid-weight jacket + liner"; gloves = "Mid-weight gloves"; }
-  else if (temp < 75) { jacket = "Standard armored jacket"; gloves = "Standard gloves"; }
-  else if (temp < 85) { jacket = "Vented/mesh jacket"; gloves = "Lightweight gloves"; }
-  else { jacket = "Mesh jacket, minimal layers"; gloves = "Vented gloves"; extra.push("Bring water"); }
+  // Thresholds in display units already stored in prefs space (user units)
+  if (metric) {
+    if (temp < 0) { jacket = "Insulated/heated suit"; gloves = "Insulated winter gloves"; extra.push("Balaclava or neck gaiter"); }
+    else if (temp < 7) { jacket = "Insulated jacket + thermal liner"; gloves = "Winter gloves"; extra.push("Neck gaiter"); }
+    else if (temp < 16) { jacket = "Mid-weight jacket + liner"; gloves = "Mid-weight gloves"; }
+    else if (temp < 24) { jacket = "Standard armored jacket"; gloves = "Standard gloves"; }
+    else if (temp < 29) { jacket = "Vented/mesh jacket"; gloves = "Lightweight gloves"; }
+    else { jacket = "Mesh jacket, minimal layers"; gloves = "Vented gloves"; extra.push("Bring water"); }
+  } else {
+    if (temp < 32) { jacket = "Insulated/heated suit"; gloves = "Insulated winter gloves"; extra.push("Balaclava or neck gaiter"); }
+    else if (temp < 45) { jacket = "Insulated jacket + thermal liner"; gloves = "Winter gloves"; extra.push("Neck gaiter"); }
+    else if (temp < 60) { jacket = "Mid-weight jacket + liner"; gloves = "Mid-weight gloves"; }
+    else if (temp < 75) { jacket = "Standard armored jacket"; gloves = "Standard gloves"; }
+    else if (temp < 85) { jacket = "Vented/mesh jacket"; gloves = "Lightweight gloves"; }
+    else { jacket = "Mesh jacket, minimal layers"; gloves = "Vented gloves"; extra.push("Bring water"); }
+  }
   if (flags.rain) extra.push("Rain gear");
   if (flags.wind) extra.push("Wind-resistant layer");
-  return { jacket, gloves, extra };
+  if (flags.ice) extra.push("Extra traction awareness");
+  const unit = metric ? "°C" : "°F";
+  const range =
+    isNum(maxTemp) && Math.round(maxTemp) !== Math.round(temp)
+      ? `${Math.round(temp)}–${Math.round(maxTemp)}${unit}`
+      : `${Math.round(temp)}${unit}`;
+  return { jacket, gloves, extra, tempLabel: range };
 }
 
 function polarPoint(cx, cy, r, tFrac) {
@@ -302,16 +525,35 @@ function darknessGradient(sun, hours) {
   return `linear-gradient(to right, ${dark} 0%, ${dark} ${pct(sr)}, ${clear} ${pct(sr + 0.02)}, ${clear} ${pct(ss - 0.02)}, ${dark} ${pct(ss)}, ${dark} 100%)`;
 }
 
+function findBestWindow(hours, prefs, sun, minLen = 2) {
+  if (!hours || hours.length < minLen) return null;
+  let best = null;
+  let i = 0;
+  while (i < hours.length) {
+    const ev = evaluateHour(hours[i], prefs, sun);
+    if (!ev.good) { i += 1; continue; }
+    let j = i + 1;
+    while (j < hours.length && evaluateHour(hours[j], prefs, sun).good) j += 1;
+    const len = j - i;
+    if (len >= minLen && (!best || len > best.len || (len === best.len && i < best.startIdx))) {
+      best = { startIdx: i, endIdx: j - 1, len, start: hours[i], end: hours[j - 1] };
+    }
+    i = j;
+  }
+  return best;
+}
+
 function computeDays(weather) {
   if (!weather) return [];
   const h = weather.hourly;
+  if (!h || !h.time) return [];
   const tz = weather.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
   const nowKey = nowKeyForTz(tz);
   const todayDateKey = nowKey.slice(0, 10);
   const nowHourKey = nowKey.slice(0, 13) + ":00";
 
   const dailySun = {};
-  if (weather.daily) {
+  if (weather.daily && weather.daily.time) {
     weather.daily.time.forEach((d, i) => {
       dailySun[d] = {
         sunriseIso: weather.daily.sunrise[i],
@@ -325,42 +567,57 @@ function computeDays(weather) {
     const dateKey = t.slice(0, 10);
     const hourNum = parseInt(t.slice(11, 13), 10);
     if (!grouped[dateKey]) grouped[dateKey] = [];
+    const visM = h.visibility && h.visibility[i] != null ? h.visibility[i] / 1609.34 : null;
     grouped[dateKey].push({
       iso: t,
       hourNum,
       hourLabel: fmtHour12(hourNum),
-      temp: h.temperature_2m[i],
-      precipProb: h.precipitation_probability[i],
-      wind: h.windspeed_10m[i],
-      gust: h.windgusts_10m[i],
-      visibilityMiles: h.visibility[i] / 1609.34,
-      weathercode: h.weathercode[i],
-      humidity: h.relative_humidity_2m[i],
+      temp: h.temperature_2m ? h.temperature_2m[i] : null,
+      precipProb: h.precipitation_probability ? h.precipitation_probability[i] : null,
+      precip: h.precipitation ? h.precipitation[i] : null,
+      wind: h.windspeed_10m ? h.windspeed_10m[i] : null,
+      gust: h.windgusts_10m ? h.windgusts_10m[i] : null,
+      visibilityMiles: visM,
+      weathercode: h.weathercode ? h.weathercode[i] : 0,
+      humidity: h.relative_humidity_2m ? h.relative_humidity_2m[i] : null,
     });
   });
 
   return Object.entries(grouped)
+    .sort(([a], [b]) => a.localeCompare(b))
     .slice(0, 7)
     .map(([date, hours]) => {
       const isToday = date === todayDateKey;
       const filteredHours = isToday ? hours.filter((x) => x.iso >= nowHourKey) : hours;
-      const noon = new Date(date + "T12:00:00");
-      const dow = noon.getDay();
+      const labels = labelPartsInTz(date, tz);
       return {
         date,
         isToday,
-        isWeekend: dow === 0 || dow === 6,
-        dateLabel: noon.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" }),
-        shortLabel: noon.toLocaleDateString([], { weekday: "short" }),
+        isWeekend: labels.isWeekend,
+        dateLabel: labels.dateLabel,
+        shortLabel: labels.shortLabel,
         hours: filteredHours,
         sun: dailySun[date],
+        timezone: tz,
       };
     });
 }
 
+function clampNum(v, min, max) {
+  const n = Number(v);
+  if (Number.isNaN(n)) return min;
+  return Math.min(max, Math.max(min, n));
+}
+
 function Toggle({ checked, onChange, label, hint }) {
   return (
-    <button type="button" onClick={() => onChange(!checked)} className="w-full flex items-center justify-between gap-3 py-2.5 text-left">
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className="w-full flex items-center justify-between gap-3 py-2.5 text-left"
+    >
       <span>
         <span className="block text-sm text-zinc-200">{label}</span>
         {hint && <span className="block text-sm text-zinc-500 mt-0.5">{hint}</span>}
@@ -383,7 +640,14 @@ function NumberField({ label, value, onChange, min, max, step = 1, unit }) {
           min={min}
           max={max}
           step={step}
-          onChange={(e) => onChange(e.target.value === "" ? 0 : Number(e.target.value))}
+          onChange={(e) => {
+            if (e.target.value === "") {
+              onChange(min);
+              return;
+            }
+            onChange(clampNum(e.target.value, min, max));
+          }}
+          onBlur={(e) => onChange(clampNum(e.target.value === "" ? min : e.target.value, min, max))}
           className="w-full bg-transparent font-mono text-lg tabular-nums text-zinc-100 focus:outline-none"
         />
         {unit && <span className="text-sm text-zinc-500 shrink-0">{unit}</span>}
@@ -428,13 +692,15 @@ function LocationPicker({ value, onChange, allowCurrent = true }) {
     setResults([]);
     setErr(null);
     try {
-      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query.trim())}&format=json&addressdetails=1&limit=5`;
+      const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query.trim())}&count=5&language=en&format=json`;
       const res = await fetch(url);
+      if (!res.ok) throw new Error("bad response");
       const json = await res.json();
-      if (!json || json.length === 0) setErr("No matching places found.");
-      setResults(json || []);
+      const list = json.results || [];
+      if (list.length === 0) setErr("No matching places found.");
+      setResults(list);
     } catch (e) {
-      setErr("Location search failed.");
+      setErr("Location search failed. Check your connection.");
     } finally {
       setSearching(false);
     }
@@ -456,7 +722,7 @@ function LocationPicker({ value, onChange, allowCurrent = true }) {
         setErr("Couldn't get your location — enter it manually.");
         setLocating(false);
       },
-      { timeout: 8000 }
+      { timeout: 8000, enableHighAccuracy: false }
     );
   };
 
@@ -467,7 +733,7 @@ function LocationPicker({ value, onChange, allowCurrent = true }) {
           <MapPin className="w-4 h-4 text-amber-400 shrink-0" />
           <span className="truncate">{value.name}</span>
         </span>
-        <button onClick={() => onChange(null)} className="text-zinc-500 hover:text-zinc-300 shrink-0">
+        <button type="button" onClick={() => onChange(null)} className="text-zinc-500 hover:text-zinc-300 shrink-0" aria-label="Clear location">
           <X className="w-4 h-4" />
         </button>
       </div>
@@ -482,35 +748,41 @@ function LocationPicker({ value, onChange, allowCurrent = true }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && search()}
-          placeholder="Street address, city, or zip"
+          placeholder="City, address, or zip"
+          aria-label="Search location"
           className="flex-1 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400"
         />
-        <button onClick={search} className="px-3 rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700">
+        <button type="button" onClick={search} className="px-3 rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700" aria-label="Search">
           {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
         </button>
       </div>
       {allowCurrent && (
-        <button onClick={useCurrent} className="flex items-center gap-1.5 text-sm text-amber-400 hover:text-amber-300">
+        <button type="button" onClick={useCurrent} className="flex items-center gap-1.5 text-sm text-amber-400 hover:text-amber-300">
           {locating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Navigation className="w-3.5 h-3.5" />}
           Use my current location
         </button>
       )}
-      {err && <p className="text-sm text-red-400">{err}</p>}
+      {err && <p className="text-sm text-red-400" role="alert">{err}</p>}
       {results.length > 0 && (
         <div className="space-y-1 pt-1">
-          {results.map((r, i) => (
-            <button
-              key={i}
-              onClick={() => {
-                onChange({ name: r.display_name.split(",").slice(0, 3).join(",").trim(), lat: parseFloat(r.lat), lon: parseFloat(r.lon) });
-                setResults([]);
-                setQuery("");
-              }}
-              className="w-full text-left text-sm px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200"
-            >
-              {r.display_name}
-            </button>
-          ))}
+          {results.map((r, i) => {
+            const bits = [r.name, r.admin1, r.country].filter(Boolean);
+            const label = bits.join(", ");
+            return (
+              <button
+                key={`${r.latitude}-${r.longitude}-${i}`}
+                type="button"
+                onClick={() => {
+                  onChange({ name: label, lat: r.latitude, lon: r.longitude });
+                  setResults([]);
+                  setQuery("");
+                }}
+                className="w-full text-left text-sm px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200"
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
@@ -546,6 +818,9 @@ function CommuteCard({ label, sublabel, windowLabel, verdict }) {
             <span key={i} className="text-sm px-2 py-1 rounded-md bg-red-500/10 text-red-300 border border-red-900">{r}</span>
           ))}
         </div>
+      )}
+      {!unknown && isNum(verdict.score) && !good && (
+        <div className="mt-2 text-sm text-zinc-500 font-mono">{verdict.score}% of hours look rideable</div>
       )}
     </div>
   );
@@ -589,7 +864,7 @@ function RideGauge({ score }) {
     { from: 0.7, to: 1, color: "#10b981" },
   ];
   return (
-    <svg viewBox="0 0 200 150" className="w-full max-w-[170px] mx-auto">
+    <svg viewBox="0 0 200 148" className="w-full max-w-[170px] mx-auto block" role="img" aria-label={known ? `Ride score ${clamped}` : "No ride score"}>
       {[0, 0.25, 0.5, 0.75, 1].map((t, i) => {
         const [x1, y1] = polarPoint(cx, cy, r + 6, t);
         const [x2, y2] = polarPoint(cx, cy, r + 15, t);
@@ -604,19 +879,39 @@ function RideGauge({ score }) {
         </g>
       )}
       <circle cx={cx} cy={cy} r="7" fill="#18181b" stroke="#fbbf24" strokeWidth="2" />
-      <text x={cx} y={cy + 36} textAnchor="middle" fontFamily="ui-monospace, monospace" fontSize="34" fontWeight="700" fill="#f4f4f5">
+      <text x={cx} y={cy + 34} textAnchor="middle" fontFamily="ui-monospace, monospace" fontSize="32" fontWeight="700" fill="#f4f4f5">
         {known ? clamped : "\u2014"}
       </text>
     </svg>
   );
 }
 
-function WarningLight({ on, Icon, title }) {
+function WarningLight({ on, Icon, title, active, onPress }) {
   return (
-    <div title={title} className="flex flex-col items-center gap-1">
-      <div className={`w-11 h-11 rounded-full flex items-center justify-center border ${on ? "bg-amber-500/20 border-amber-500 text-amber-400" : "bg-zinc-800/40 border-zinc-800 text-zinc-700"}`}>
+    <div className="relative flex flex-col items-center">
+      {active && (
+        <div className="indicator-bubble" role="tooltip">
+          {title}
+          <span className="indicator-bubble-tail" aria-hidden="true" />
+        </div>
+      )}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onPress();
+        }}
+        className={`w-11 h-11 rounded-full flex items-center justify-center border transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400 ${
+          on
+            ? "bg-amber-500/20 border-amber-500 text-amber-400"
+            : "bg-zinc-800/40 border-zinc-800 text-zinc-700"
+        } ${active ? "scale-110" : ""}`}
+        style={active ? { transform: "scale(1.08)" } : undefined}
+        aria-label={`${title}${on ? " warning" : " clear"}`}
+        aria-expanded={active}
+      >
         <Icon className="w-6 h-6" />
-      </div>
+      </button>
     </div>
   );
 }
@@ -633,10 +928,35 @@ function WarningLights({ flags }) {
     { key: "ice", Icon: Snowflake, title: "Ice risk" },
     { key: "dark", Icon: Moon, title: "Darkness" },
   ];
+  const [activeKey, setActiveKey] = useState(null);
+  const timerRef = useRef(null);
+
+  const show = (key) => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setActiveKey((prev) => (prev === key ? null : key));
+    timerRef.current = setTimeout(() => setActiveKey(null), 2200);
+  };
+
+  useEffect(() => {
+    const dismiss = () => setActiveKey(null);
+    document.addEventListener("pointerdown", dismiss);
+    return () => {
+      document.removeEventListener("pointerdown", dismiss);
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
   return (
-    <div className="flex justify-center gap-2 flex-wrap">
+    <div className="indicator-grid">
       {items.map(({ key, Icon, title }) => (
-        <WarningLight key={key} on={!!flags[key]} Icon={Icon} title={title} />
+        <WarningLight
+          key={key}
+          on={!!flags[key]}
+          Icon={Icon}
+          title={title}
+          active={activeKey === key}
+          onPress={() => show(key)}
+        />
       ))}
     </div>
   );
@@ -647,10 +967,10 @@ function RideGaugeCard({ score, flags }) {
   const label = !known ? "NO DATA" : score >= 90 ? "GO" : score >= 50 ? "CAUTION" : "NO-GO";
   const labelColor = !known ? "text-zinc-600" : score >= 90 ? "text-emerald-400" : score >= 50 ? "text-amber-400" : "text-red-400";
   return (
-    <div className="carbon-texture rounded-2xl border border-zinc-800 p-4 pb-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-      <h3 className="text-sm font-semibold uppercase tracking-widest text-amber-400 mb-1 text-center">Ride Score</h3>
+    <div className="carbon-texture rounded-2xl border border-zinc-800 p-4 ride-score-card shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+      <h3 className="text-sm font-semibold uppercase tracking-widest text-amber-400 text-center ride-score-title">Ride Score</h3>
       <RideGauge score={score} />
-      <div className={`text-center font-mono font-bold tracking-widest text-base -mt-3 mb-3 ${labelColor}`}>{label}</div>
+      <div className={`text-center font-mono font-bold tracking-widest text-base ride-score-label ${labelColor}`}>{label}</div>
       <WarningLights flags={flags} />
     </div>
   );
@@ -660,7 +980,10 @@ function GearCard({ gear }) {
   if (!gear) return null;
   return (
     <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
-      <h3 className="text-sm font-semibold uppercase tracking-widest text-amber-400 mb-3">Gear check</h3>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold uppercase tracking-widest text-amber-400">Gear check</h3>
+        {gear.tempLabel && <span className="text-sm font-mono text-zinc-500">{gear.tempLabel}</span>}
+      </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <div className="text-sm text-zinc-500 uppercase tracking-wider mb-1">Jacket</div>
@@ -682,16 +1005,44 @@ function GearCard({ gear }) {
   );
 }
 
+function BestWindowCard({ window }) {
+  if (!window) return null;
+  const label =
+    window.start.hourLabel === window.end.hourLabel
+      ? window.start.hourLabel
+      : `${window.start.hourLabel} – ${window.end.hourLabel}`;
+  return (
+    <div className="rounded-2xl border border-emerald-800 bg-emerald-500/10 p-4">
+      <div className="text-sm uppercase tracking-widest text-zinc-500">Best ride window</div>
+      <div className="mt-1 font-mono text-lg text-emerald-400 font-bold">{label}</div>
+      <div className="text-sm text-zinc-500 mt-0.5">{window.len} consecutive good hour{window.len === 1 ? "" : "s"}</div>
+    </div>
+  );
+}
+
 function WeekRow({ day, workDay, prefs, onSelect, noCommute }) {
   const morning = commuteVerdict(hoursInWindow(day.hours, prefs.morningStart, prefs.morningEnd), prefs, day.sun);
   const evening = commuteVerdict(hoursInWindow(workDay.hours, prefs.eveningStart, prefs.eveningEnd), prefs, workDay.sun);
-  const temps = day.hours.map((h) => h.temp);
+  const temps = day.hours.map((h) => h.temp).filter(isNum);
   const hi = temps.length ? Math.round(Math.max(...temps)) : null;
   const lo = temps.length ? Math.round(Math.min(...temps)) : null;
   const midHour = day.hours[Math.floor(day.hours.length / 2)];
   const midCategory = midHour ? codeInfo(midHour.weathercode)[1] : "clear";
+  const flags = mergeFlags(
+    conditionFlags(hoursInWindow(day.hours, prefs.morningStart, prefs.morningEnd), prefs, day.sun),
+    conditionFlags(hoursInWindow(workDay.hours, prefs.eveningStart, prefs.eveningEnd), prefs, workDay.sun)
+  );
+  const issueIcons = [
+    flags.rain && CloudRain,
+    flags.wind && Wind,
+    flags.storm && CloudLightning,
+    flags.ice && Snowflake,
+    flags.snow && CloudSnow,
+    flags.fog && CloudFog,
+  ].filter(Boolean).slice(0, 3);
+
   return (
-    <button onClick={onSelect} className="w-full flex items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-3 text-left hover:border-zinc-700">
+    <button type="button" onClick={onSelect} className="w-full flex items-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-3 text-left hover:border-zinc-700">
       <WeatherIcon category={midCategory} className="w-5 h-5 text-zinc-500 shrink-0" />
       <div className="w-20 shrink-0">
         <div className="text-sm text-zinc-200">{day.isToday ? "Today" : day.shortLabel}</div>
@@ -703,9 +1054,14 @@ function WeekRow({ day, workDay, prefs, onSelect, noCommute }) {
         <>
           <VerdictPill label="AM" status={morning.status} />
           <VerdictPill label="PM" status={evening.status} />
+          {issueIcons.length > 0 && (
+            <span className="flex items-center gap-1 text-amber-500/80">
+              {issueIcons.map((Icon, i) => <Icon key={i} className="w-3.5 h-3.5" />)}
+            </span>
+          )}
         </>
       )}
-      <span className="ml-auto text-zinc-600 text-sm">→</span>
+      <span className="ml-auto text-zinc-600 text-sm" aria-hidden="true">→</span>
     </button>
   );
 }
@@ -738,7 +1094,7 @@ function StatBlock({ label, value }) {
 
 function LogToggleButton({ label, active, onClick }) {
   return (
-    <button onClick={onClick} className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-medium border ${active ? "bg-emerald-500/15 border-emerald-700 text-emerald-400" : "bg-zinc-800 border-zinc-700 text-zinc-400"}`}>
+    <button type="button" onClick={onClick} className={`flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-medium border ${active ? "bg-emerald-500/15 border-emerald-700 text-emerald-400" : "bg-zinc-800 border-zinc-700 text-zinc-400"}`}>
       <CheckCircle2 className="w-3.5 h-3.5" />
       {label}
     </button>
@@ -747,10 +1103,51 @@ function LogToggleButton({ label, active, onClick }) {
 
 function LogPill({ label, active, onClick }) {
   return (
-    <button onClick={onClick} className={`text-sm font-mono px-2 py-1 rounded-md border ${active ? "bg-emerald-500/15 border-emerald-700 text-emerald-400" : "bg-zinc-900 border-zinc-700 text-zinc-500"}`}>
+    <button type="button" onClick={onClick} className={`text-sm font-mono px-2 py-1 rounded-md border ${active ? "bg-emerald-500/15 border-emerald-700 text-emerald-400" : "bg-zinc-900 border-zinc-700 text-zinc-500"}`}>
       {label}
     </button>
   );
+}
+
+function formatUpdated(ts) {
+  if (!ts) return null;
+  try {
+    return new Date(ts).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  } catch (e) {
+    return null;
+  }
+}
+
+function convertPrefsUnits(prefs, toMetric) {
+  if ((prefs.units === "metric") === toMetric) return prefs;
+  const f2c = (f) => Math.round(((f - 32) * 5) / 9);
+  const c2f = (c) => Math.round((c * 9) / 5 + 32);
+  const mph2kph = (m) => Math.round(m * 1.60934);
+  const kph2mph = (k) => Math.round(k / 1.60934);
+  const mi2km = (m) => Math.round(m * 1.60934 * 10) / 10;
+  const km2mi = (k) => Math.round((k / 1.60934) * 10) / 10;
+  if (toMetric) {
+    return {
+      ...prefs,
+      units: "metric",
+      tempMin: f2c(prefs.tempMin),
+      tempMax: f2c(prefs.tempMax),
+      maxWind: mph2kph(prefs.maxWind),
+      maxGust: mph2kph(prefs.maxGust),
+      minVisibilityMiles: mi2km(prefs.minVisibilityMiles),
+      humidityTempThreshold: f2c(prefs.humidityTempThreshold),
+    };
+  }
+  return {
+    ...prefs,
+    units: "imperial",
+    tempMin: c2f(prefs.tempMin),
+    tempMax: c2f(prefs.tempMax),
+    maxWind: kph2mph(prefs.maxWind),
+    maxGust: kph2mph(prefs.maxGust),
+    minVisibilityMiles: km2mi(prefs.minVisibilityMiles),
+    humidityTempThreshold: c2f(prefs.humidityTempThreshold),
+  };
 }
 
 function App() {
@@ -767,17 +1164,30 @@ function App() {
   const [hourlyLoc, setHourlyLoc] = useState("home");
   const [rideLog, setRideLog] = useState({});
   const [daysOff, setDaysOff] = useState({});
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const locationsRef = useRef(null);
 
   const [formPrefs, setFormPrefs] = useState(DEFAULT_PREFS);
   const [formLocations, setFormLocations] = useState({ home: null, work: null });
 
   const loadWeather = useCallback(async (locations) => {
+    if (!locations || !locations.home) return;
+    locationsRef.current = { home: locations.home, work: locations.work || null };
     setLoadingWeather(true);
     setError(null);
     try {
+      const unitsMetric = typeof locations._unitsMetric === "boolean"
+        ? locations._unitsMetric
+        : !!(data && data.prefs && data.prefs.units === "metric");
+
+      const tempUnit = unitsMetric ? "celsius" : "fahrenheit";
+      const windUnit = unitsMetric ? "kmh" : "mph";
+
       const fetchOne = (loc) =>
         fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&hourly=temperature_2m,precipitation_probability,precipitation,windspeed_10m,windgusts_10m,visibility,weathercode,relative_humidity_2m&daily=sunrise,sunset&temperature_unit=fahrenheit&windspeed_unit=mph&timezone=auto&forecast_days=7`
+          `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}` +
+            `&hourly=temperature_2m,precipitation_probability,precipitation,windspeed_10m,windgusts_10m,visibility,weathercode,relative_humidity_2m` +
+            `&daily=sunrise,sunset&temperature_unit=${tempUnit}&windspeed_unit=${windUnit}&timezone=auto&forecast_days=7`
         ).then((r) => {
           if (!r.ok) throw new Error("bad response");
           return r.json();
@@ -790,16 +1200,17 @@ function App() {
       setWeatherHome(homeJson);
       setWeatherWork(workJson);
       setDayIndex(0);
+      setLastUpdated(Date.now());
     } catch (e) {
       setError("Couldn't load the forecast. Check your connection and try again.");
     } finally {
       setLoadingWeather(false);
     }
-  }, []);
+  }, [data]);
 
   const persistLog = async (log) => {
     try {
-      await storage.set(STORAGE_KEY_LOG, JSON.stringify(log), false);
+      await storage.set(STORAGE_KEY_LOG, JSON.stringify(log));
     } catch (e) {
       // best effort
     }
@@ -811,6 +1222,9 @@ function App() {
       const entry = { ...(prev[dateKey] || { morning: false, evening: false }) };
       entry[leg] = !entry[leg];
       const next = { ...prev, [dateKey]: entry };
+      if (!entry.morning && !entry.evening) {
+        delete next[dateKey];
+      }
       persistLog(next);
       return next;
     });
@@ -818,7 +1232,7 @@ function App() {
 
   const persistDaysOff = async (map) => {
     try {
-      await storage.set(STORAGE_KEY_DAYSOFF, JSON.stringify(map), false);
+      await storage.set(STORAGE_KEY_DAYSOFF, JSON.stringify(map));
     } catch (e) {
       // best effort
     }
@@ -827,7 +1241,9 @@ function App() {
   const toggleDayOff = (dateKey) => {
     if (!dateKey) return;
     setDaysOff((prev) => {
-      const next = { ...prev, [dateKey]: !prev[dateKey] };
+      const next = { ...prev };
+      if (next[dateKey]) delete next[dateKey];
+      else next[dateKey] = true;
       persistDaysOff(next);
       return next;
     });
@@ -836,7 +1252,7 @@ function App() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await storage.get(STORAGE_KEY, false);
+        const res = await storage.get(STORAGE_KEY);
         if (res && res.value) {
           const parsed = JSON.parse(res.value);
           const locations = parsed.locations || (parsed.location ? { home: parsed.location, work: null } : { home: null, work: null });
@@ -844,8 +1260,38 @@ function App() {
           setData(normalized);
           setFormPrefs(normalized.prefs);
           setFormLocations(normalized.locations);
-          if (normalized.locations.home) loadWeather(normalized.locations);
-          else setEditing(true);
+          if (normalized.locations.home) {
+            locationsRef.current = normalized.locations;
+            // Load weather with correct units without depending on data state race
+            setLoadingWeather(true);
+            try {
+              const unitsMetric = normalized.prefs.units === "metric";
+              const tempUnit = unitsMetric ? "celsius" : "fahrenheit";
+              const windUnit = unitsMetric ? "kmh" : "mph";
+              const fetchOne = (loc) =>
+                fetch(
+                  `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}` +
+                    `&hourly=temperature_2m,precipitation_probability,precipitation,windspeed_10m,windgusts_10m,visibility,weathercode,relative_humidity_2m` +
+                    `&daily=sunrise,sunset&temperature_unit=${tempUnit}&windspeed_unit=${windUnit}&timezone=auto&forecast_days=7`
+                ).then((r) => {
+                  if (!r.ok) throw new Error("bad response");
+                  return r.json();
+                });
+              const [homeJson, workJson] = await Promise.all([
+                fetchOne(normalized.locations.home),
+                normalized.locations.work ? fetchOne(normalized.locations.work) : Promise.resolve(null),
+              ]);
+              setWeatherHome(homeJson);
+              setWeatherWork(workJson);
+              setLastUpdated(Date.now());
+            } catch (e) {
+              setError("Couldn't load the forecast. Check your connection and try again.");
+            } finally {
+              setLoadingWeather(false);
+            }
+          } else {
+            setEditing(true);
+          }
         } else {
           setEditing(true);
         }
@@ -853,20 +1299,48 @@ function App() {
         setEditing(true);
       }
       try {
-        const logRes = await storage.get(STORAGE_KEY_LOG, false);
+        const logRes = await storage.get(STORAGE_KEY_LOG);
         if (logRes && logRes.value) setRideLog(JSON.parse(logRes.value));
       } catch (e) {
         // no log yet
       }
       try {
-        const offRes = await storage.get(STORAGE_KEY_DAYSOFF, false);
-        if (offRes && offRes.value) setDaysOff(JSON.parse(offRes.value));
+        const offRes = await storage.get(STORAGE_KEY_DAYSOFF);
+        if (offRes && offRes.value) {
+          const raw = JSON.parse(offRes.value);
+          // prune falsey keys
+          const cleaned = {};
+          Object.entries(raw || {}).forEach(([k, v]) => { if (v) cleaned[k] = true; });
+          setDaysOff(cleaned);
+        }
       } catch (e) {
         // none marked yet
       }
       setLoaded(true);
     })();
-  }, [loadWeather]);
+  }, []);
+
+  // Auto-refresh every 30 min while visible
+  useEffect(() => {
+    if (!data || !data.locations || !data.locations.home || editing) return undefined;
+    const tick = () => {
+      if (document.visibilityState === "visible" && locationsRef.current) {
+        const locs = { ...locationsRef.current, _unitsMetric: data.prefs.units === "metric" };
+        loadWeather(locs);
+      }
+    };
+    const id = setInterval(tick, REFRESH_MS);
+    const onVis = () => {
+      if (document.visibilityState === "visible" && lastUpdated && Date.now() - lastUpdated > REFRESH_MS) {
+        tick();
+      }
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [data, editing, loadWeather, lastUpdated]);
 
   const openEdit = () => {
     if (data) {
@@ -883,19 +1357,40 @@ function App() {
       setError("Set a home location before saving.");
       return;
     }
+    // Soft-validate commute windows (allow overnight)
+    const ms = timeToMinutes(formPrefs.morningStart);
+    const me = timeToMinutes(formPrefs.morningEnd);
+    const es = timeToMinutes(formPrefs.eveningStart);
+    const ee = timeToMinutes(formPrefs.eveningEnd);
+    if (ms === me) {
+      setError("Morning start and end can't be the same time.");
+      return;
+    }
+    if (es === ee) {
+      setError("Evening start and end can't be the same time.");
+      return;
+    }
     const newData = { prefs: formPrefs, locations: formLocations };
     try {
-      await storage.set(STORAGE_KEY, JSON.stringify(newData), false);
+      await storage.set(STORAGE_KEY, JSON.stringify(newData));
     } catch (e) {
       // non-fatal
     }
     setData(newData);
     setEditing(false);
     setError(null);
-    loadWeather(formLocations);
+    locationsRef.current = formLocations;
+    loadWeather({ ...formLocations, _unitsMetric: formPrefs.units === "metric" });
+  };
+
+  const refreshNow = () => {
+    if (!data || !data.locations || !data.locations.home) return;
+    loadWeather({ ...data.locations, _unitsMetric: data.prefs.units === "metric" });
   };
 
   const prefs = data ? data.prefs : DEFAULT_PREFS;
+  const metric = prefs.units === "metric";
+
   const homeDaysRaw = useMemo(() => computeDays(weatherHome), [weatherHome]);
   const workDaysRaw = useMemo(() => computeDays(weatherWork), [weatherWork]);
   const filterOvernight = (days) =>
@@ -912,15 +1407,16 @@ function App() {
   const isOff = !!(homeDay && daysOff[homeDay.date]);
   const noCommute = isWeekend || isOff;
 
-  const morningVerdict = homeDay
-    ? commuteVerdict(hoursInWindow(homeDay.hours, prefs.morningStart, prefs.morningEnd), prefs, homeDay.sun)
-    : { status: "unknown", reasons: [] };
-  const eveningVerdict = workDay
-    ? commuteVerdict(hoursInWindow(workDay.hours, prefs.eveningStart, prefs.eveningEnd), prefs, workDay.sun)
-    : { status: "unknown", reasons: [] };
+  const morningWindowHours = homeDay ? hoursInWindow(homeDay.hours, prefs.morningStart, prefs.morningEnd) : [];
+  const eveningWindowHours = workDay ? hoursInWindow(workDay.hours, prefs.eveningStart, prefs.eveningEnd) : [];
 
-  const freeRideHours = homeDay && homeDay.isToday ? homeDay.hours.slice(0, 3) : [];
+  const morningVerdict = commuteVerdict(morningWindowHours, prefs, homeDay && homeDay.sun);
+  const eveningVerdict = commuteVerdict(eveningWindowHours, prefs, workDay && workDay.sun);
+
+  // Free ride: next stretch of hours (up to 4) or best consecutive good window today
+  const freeRideHours = homeDay && homeDay.isToday ? homeDay.hours.slice(0, 4) : [];
   const freeRideVerdict = commuteVerdict(freeRideHours, prefs, homeDay && homeDay.sun);
+  const bestWindow = homeDay ? findBestWindow(homeDay.hours, prefs, homeDay.sun, 2) : null;
 
   const activeDay = !noCommute && hourlyLoc === "work" && hasWork && workDays[dayIndex] ? workDays[dayIndex] : homeDay;
 
@@ -929,8 +1425,9 @@ function App() {
     return activeDay.hours.map((h) => ({ hour: h, ev: evaluateHour(h, prefs, activeDay.sun) }));
   }, [activeDay, prefs]);
 
-  const maxTemp = hourEvals.length ? Math.max(...hourEvals.map((x) => x.hour.temp)) : 100;
-  const minTemp = hourEvals.length ? Math.min(...hourEvals.map((x) => x.hour.temp)) : 30;
+  const tempsForChart = hourEvals.map((x) => x.hour.temp).filter(isNum);
+  const maxTemp = tempsForChart.length ? Math.max(...tempsForChart) : 100;
+  const minTemp = tempsForChart.length ? Math.min(...tempsForChart) : 30;
   const tempRange = Math.max(maxTemp - minTemp, 1);
 
   const gaugeHours = hourEvals.map((x) => x.hour);
@@ -942,8 +1439,7 @@ function App() {
   const inMorningWindow = (h) => hoursInWindow([h], prefs.morningStart, prefs.morningEnd).length > 0;
   const inEveningWindow = (h) => hoursInWindow([h], prefs.eveningStart, prefs.eveningEnd).length > 0;
 
-  const morningWindowHours = homeDay ? hoursInWindow(homeDay.hours, prefs.morningStart, prefs.morningEnd) : [];
-  const eveningWindowHours = workDay ? hoursInWindow(workDay.hours, prefs.eveningStart, prefs.eveningEnd) : [];
+  // Score only remaining (non-empty) commute legs
   const rideScore = computeRideScore(morningWindowHours, eveningWindowHours, prefs, homeDay && homeDay.sun, workDay && workDay.sun);
   const warningFlags = mergeFlags(
     conditionFlags(morningWindowHours, prefs, homeDay && homeDay.sun),
@@ -951,9 +1447,14 @@ function App() {
   );
 
   const allWindowHours = [...morningWindowHours, ...eveningWindowHours];
-  const gearTempHours = noCommute && homeDay ? homeDay.hours : allWindowHours;
-  const minWindowTemp = gearTempHours.length ? Math.min(...gearTempHours.map((h) => h.temp)) : null;
-  const gear = gearSuggestion(minWindowTemp, warningFlags);
+  const gearTempHours = noCommute && homeDay ? homeDay.hours : allWindowHours.length ? allWindowHours : (homeDay ? homeDay.hours : []);
+  const gearTemps = gearTempHours.map((h) => h.temp).filter(isNum);
+  const minWindowTemp = gearTemps.length ? Math.min(...gearTemps) : null;
+  const maxWindowTemp = gearTemps.length ? Math.max(...gearTemps) : null;
+  const gearFlags = noCommute
+    ? conditionFlags(homeDay ? homeDay.hours : [], prefs, homeDay && homeDay.sun)
+    : warningFlags;
+  const gear = gearSuggestion(minWindowTemp, maxWindowTemp, gearFlags, metric);
 
   const todayKey = homeDays[0] ? homeDays[0].date : null;
 
@@ -969,6 +1470,8 @@ function App() {
     });
     return { entries, totalMornings, totalEvenings, totalDays: entries.length };
   }, [rideLog]);
+
+  const updatedLabel = formatUpdated(lastUpdated);
 
   if (!loaded) {
     return (
@@ -991,10 +1494,20 @@ function App() {
               <MapPin className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate">{data.locations.home.name}{hasWork ? " +1" : ""}</span>
             </span>
-            <button onClick={() => setShowLog(!showLog)} className={`p-1.5 rounded-lg hover:bg-zinc-800 shrink-0 ${showLog ? "text-amber-400" : "text-zinc-400"}`}>
+            <button
+              type="button"
+              onClick={refreshNow}
+              disabled={loadingWeather}
+              className="p-1.5 rounded-lg hover:bg-zinc-800 shrink-0 text-zinc-400 disabled:opacity-50"
+              aria-label="Refresh forecast"
+              title={updatedLabel ? `Updated ${updatedLabel}` : "Refresh"}
+            >
+              <RefreshCw className={`w-5 h-5 ${loadingWeather ? "animate-spin" : ""}`} />
+            </button>
+            <button type="button" onClick={() => setShowLog(!showLog)} className={`p-1.5 rounded-lg hover:bg-zinc-800 shrink-0 ${showLog ? "text-amber-400" : "text-zinc-400"}`} aria-label="Ride log">
               <ListChecks className="w-5 h-5" />
             </button>
-            <button onClick={openEdit} className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 shrink-0">
+            <button type="button" onClick={openEdit} className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 shrink-0" aria-label="Settings">
               <Settings2 className="w-5 h-5" />
             </button>
           </div>
@@ -1009,11 +1522,31 @@ function App() {
             </SectionCard>
 
             <SectionCard title="Work location (optional)">
-              <p className="text-sm text-zinc-500">Set this if your evening commute weather should be checked separately from home.</p>
+              <p className="text-sm text-zinc-500">Set this if evening commute weather should be checked at work instead of home.</p>
               <LocationPicker value={formLocations.work} onChange={(loc) => setFormLocations((p) => ({ ...p, work: loc }))} />
             </SectionCard>
 
+            <SectionCard title="Units">
+              <div className="flex rounded-xl border border-zinc-800 p-1 bg-zinc-950">
+                <button
+                  type="button"
+                  onClick={() => setFormPrefs((p) => convertPrefsUnits(p, false))}
+                  className={`flex-1 py-1.5 rounded-lg text-sm font-mono tracking-wide ${formPrefs.units !== "metric" ? "bg-amber-500 text-zinc-950 font-bold" : "text-zinc-400"}`}
+                >
+                  °F / mph
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormPrefs((p) => convertPrefsUnits(p, true))}
+                  className={`flex-1 py-1.5 rounded-lg text-sm font-mono tracking-wide ${formPrefs.units === "metric" ? "bg-amber-500 text-zinc-950 font-bold" : "text-zinc-400"}`}
+                >
+                  °C / km/h
+                </button>
+              </div>
+            </SectionCard>
+
             <SectionCard title="Commute times">
+              <p className="text-sm text-zinc-500">Overnight windows (e.g. 22:00–06:00) are supported.</p>
               <div className="grid grid-cols-2 gap-3">
                 <TimeField label="Morning start" value={formPrefs.morningStart} onChange={(v) => setFormPrefs({ ...formPrefs, morningStart: v })} />
                 <TimeField label="Morning end" value={formPrefs.morningEnd} onChange={(v) => setFormPrefs({ ...formPrefs, morningEnd: v })} />
@@ -1024,15 +1557,15 @@ function App() {
 
             <SectionCard title="Temperature">
               <div className="grid grid-cols-2 gap-3">
-                <NumberField label="Min" unit="°F" value={formPrefs.tempMin} onChange={(v) => setFormPrefs({ ...formPrefs, tempMin: v })} min={-20} max={130} />
-                <NumberField label="Max" unit="°F" value={formPrefs.tempMax} onChange={(v) => setFormPrefs({ ...formPrefs, tempMax: v })} min={-20} max={130} />
+                <NumberField label="Min" unit={formPrefs.units === "metric" ? "°C" : "°F"} value={formPrefs.tempMin} onChange={(v) => setFormPrefs({ ...formPrefs, tempMin: v })} min={formPrefs.units === "metric" ? -30 : -20} max={formPrefs.units === "metric" ? 55 : 130} />
+                <NumberField label="Max" unit={formPrefs.units === "metric" ? "°C" : "°F"} value={formPrefs.tempMax} onChange={(v) => setFormPrefs({ ...formPrefs, tempMax: v })} min={formPrefs.units === "metric" ? -30 : -20} max={formPrefs.units === "metric" ? 55 : 130} />
               </div>
             </SectionCard>
 
             <SectionCard title="Wind">
               <div className="grid grid-cols-2 gap-3">
-                <NumberField label="Max sustained" unit="mph" value={formPrefs.maxWind} onChange={(v) => setFormPrefs({ ...formPrefs, maxWind: v })} min={0} max={80} />
-                <NumberField label="Max gust" unit="mph" value={formPrefs.maxGust} onChange={(v) => setFormPrefs({ ...formPrefs, maxGust: v })} min={0} max={100} />
+                <NumberField label="Max sustained" unit={formPrefs.units === "metric" ? "km/h" : "mph"} value={formPrefs.maxWind} onChange={(v) => setFormPrefs({ ...formPrefs, maxWind: v })} min={0} max={formPrefs.units === "metric" ? 130 : 80} />
+                <NumberField label="Max gust" unit={formPrefs.units === "metric" ? "km/h" : "mph"} value={formPrefs.maxGust} onChange={(v) => setFormPrefs({ ...formPrefs, maxGust: v })} min={0} max={formPrefs.units === "metric" ? 160 : 100} />
               </div>
             </SectionCard>
 
@@ -1044,7 +1577,15 @@ function App() {
               <Toggle label="Avoid snow" checked={formPrefs.avoidSnow} onChange={(v) => setFormPrefs({ ...formPrefs, avoidSnow: v })} />
               <Toggle label="Avoid fog" checked={formPrefs.avoidFog} onChange={(v) => setFormPrefs({ ...formPrefs, avoidFog: v })} />
               {formPrefs.avoidFog && (
-                <NumberField label="Min visibility" unit="mi" value={formPrefs.minVisibilityMiles} onChange={(v) => setFormPrefs({ ...formPrefs, minVisibilityMiles: v })} min={0} max={10} step={0.5} />
+                <NumberField
+                  label="Min visibility"
+                  unit={formPrefs.units === "metric" ? "km" : "mi"}
+                  value={formPrefs.minVisibilityMiles}
+                  onChange={(v) => setFormPrefs({ ...formPrefs, minVisibilityMiles: v })}
+                  min={0}
+                  max={formPrefs.units === "metric" ? 16 : 10}
+                  step={0.5}
+                />
               )}
             </SectionCard>
 
@@ -1053,42 +1594,42 @@ function App() {
               {formPrefs.avoidHumidity && (
                 <>
                   <NumberField label="Max humidity" unit="%" value={formPrefs.maxHumidity} onChange={(v) => setFormPrefs({ ...formPrefs, maxHumidity: v })} min={0} max={100} step={5} />
-                  <NumberField label="Only matters above" unit="°F" value={formPrefs.humidityTempThreshold} onChange={(v) => setFormPrefs({ ...formPrefs, humidityTempThreshold: v })} min={-20} max={130} />
+                  <NumberField label="Only matters above" unit={formPrefs.units === "metric" ? "°C" : "°F"} value={formPrefs.humidityTempThreshold} onChange={(v) => setFormPrefs({ ...formPrefs, humidityTempThreshold: v })} min={formPrefs.units === "metric" ? -30 : -20} max={formPrefs.units === "metric" ? 55 : 130} />
                 </>
               )}
             </SectionCard>
 
             <SectionCard title="Other safety factors">
-              <Toggle label="Warn about ice risk" hint="Flags hours at or below 34°F" checked={formPrefs.warnIceRisk} onChange={(v) => setFormPrefs({ ...formPrefs, warnIceRisk: v })} />
-              <Toggle label="Avoid riding in the dark" hint="Uses sunrise/sunset for your home location" checked={formPrefs.avoidDark} onChange={(v) => setFormPrefs({ ...formPrefs, avoidDark: v })} />
+              <Toggle label="Warn about ice risk" hint={formPrefs.units === "metric" ? "Flags hours at or below 1°C (and wet+freeze)" : "Flags hours at or below 34°F (and wet+freeze)"} checked={formPrefs.warnIceRisk} onChange={(v) => setFormPrefs({ ...formPrefs, warnIceRisk: v })} />
+              <Toggle label="Avoid riding in the dark" hint="Uses sunrise/sunset; hour midpoint must be in daylight" checked={formPrefs.avoidDark} onChange={(v) => setFormPrefs({ ...formPrefs, avoidDark: v })} />
               <Toggle label="Hide overnight hours" hint="Removes 11pm–5am from every view" checked={formPrefs.hideOvernight} onChange={(v) => setFormPrefs({ ...formPrefs, hideOvernight: v })} />
             </SectionCard>
 
             {error && (
-              <div className="flex items-center gap-2 text-sm text-red-400 bg-red-500/10 border border-red-900 rounded-lg px-3 py-2">
+              <div className="flex items-center gap-2 text-sm text-red-400 bg-red-500/10 border border-red-900 rounded-lg px-3 py-2" role="alert">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
                 {error}
               </div>
             )}
 
             <div className="flex gap-3 pt-1">
-              <button onClick={() => setFormPrefs(DEFAULT_PREFS)} className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-300 px-2">
+              <button type="button" onClick={() => setFormPrefs(DEFAULT_PREFS)} className="flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-300 px-2">
                 <RotateCcw className="w-3.5 h-3.5" /> Reset to defaults
               </button>
               <div className="flex-1" />
               {data && (
-                <button onClick={() => { setEditing(false); setError(null); }} className="px-4 py-2 rounded-lg text-zinc-400 hover:text-zinc-200">
+                <button type="button" onClick={() => { setEditing(false); setError(null); }} className="px-4 py-2 rounded-lg text-zinc-400 hover:text-zinc-200">
                   Cancel
                 </button>
               )}
-              <button onClick={savePrefs} className="px-5 py-2 rounded-lg bg-amber-500 text-zinc-950 font-semibold hover:bg-amber-400">
+              <button type="button" onClick={savePrefs} className="px-5 py-2 rounded-lg bg-amber-500 text-zinc-950 font-semibold hover:bg-amber-400">
                 Save
               </button>
             </div>
           </div>
         ) : showLog ? (
           <div className="space-y-4">
-            <button onClick={() => setShowLog(false)} className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-zinc-200">
+            <button type="button" onClick={() => setShowLog(false)} className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-zinc-200">
               <ChevronLeft className="w-4 h-4" /> Back to forecast
             </button>
 
@@ -1119,7 +1660,7 @@ function App() {
         ) : (
           <>
             {error && (
-              <div className="flex items-center gap-2 text-sm text-red-400 bg-red-500/10 border border-red-900 rounded-lg px-3 py-2">
+              <div className="flex items-center gap-2 text-sm text-red-400 bg-red-500/10 border border-red-900 rounded-lg px-3 py-2" role="alert">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
                 {error}
               </div>
@@ -1132,10 +1673,10 @@ function App() {
             ) : homeDays.length > 0 ? (
               <>
                 <div className="flex rounded-xl border border-zinc-800 p-1 bg-zinc-900">
-                  <button onClick={() => setMainView("daily")} className={`flex-1 py-1.5 rounded-lg text-sm font-mono tracking-wide ${mainView === "daily" ? "bg-amber-500 text-zinc-950 font-bold" : "text-zinc-400"}`}>
+                  <button type="button" onClick={() => setMainView("daily")} className={`flex-1 py-1.5 rounded-lg text-sm font-mono tracking-wide ${mainView === "daily" ? "bg-amber-500 text-zinc-950 font-bold" : "text-zinc-400"}`}>
                     DAILY
                   </button>
-                  <button onClick={() => setMainView("week")} className={`flex-1 py-1.5 rounded-lg text-sm font-mono tracking-wide ${mainView === "week" ? "bg-amber-500 text-zinc-950 font-bold" : "text-zinc-400"}`}>
+                  <button type="button" onClick={() => setMainView("week")} className={`flex-1 py-1.5 rounded-lg text-sm font-mono tracking-wide ${mainView === "week" ? "bg-amber-500 text-zinc-950 font-bold" : "text-zinc-400"}`}>
                     WEEK
                   </button>
                 </div>
@@ -1148,6 +1689,7 @@ function App() {
                       {homeDays.map((d, i) => (
                         <button
                           key={d.date}
+                          type="button"
                           onClick={() => setDayIndex(i)}
                           className={`flex-1 rounded-xl py-2 text-sm font-mono tracking-wide border ${i === dayIndex ? "bg-amber-500 text-zinc-950 border-amber-500 font-bold" : "bg-zinc-900 text-zinc-400 border-zinc-800"}`}
                         >
@@ -1156,10 +1698,16 @@ function App() {
                       ))}
                     </div>
 
-                    <SunTimes sun={homeDay && homeDay.sun} />
+                    <div className="flex flex-col items-center gap-1">
+                      <SunTimes sun={homeDay && homeDay.sun} />
+                      {updatedLabel && (
+                        <span className="text-sm text-zinc-600 font-mono">Updated {updatedLabel}</span>
+                      )}
+                    </div>
 
                     {!isWeekend && homeDay && (
                       <button
+                        type="button"
                         onClick={() => toggleDayOff(homeDay.date)}
                         className={`w-full rounded-xl py-2 text-sm font-mono tracking-wide border ${isOff ? "bg-amber-500 text-zinc-950 border-amber-500 font-bold" : "bg-zinc-900 text-zinc-400 border-zinc-800"}`}
                       >
@@ -1182,14 +1730,28 @@ function App() {
                           </div>
                         )}
 
+                        {bestWindow && (
+                          <BestWindowCard window={bestWindow} />
+                        )}
+
                         {homeDay.isToday && freeRideHours.length > 0 && (
                           <CommuteCard label="Free ride" sublabel={`At ${data.locations.home.name}`} windowLabel="Next few hours" verdict={freeRideVerdict} />
                         )}
 
                         {!noCommute && (
                           <div className="space-y-3">
-                            <CommuteCard label="Morning commute" sublabel={hasWork ? `At ${data.locations.home.name}` : null} windowLabel={`${prefs.morningStart} – ${prefs.morningEnd}`} verdict={morningVerdict} />
-                            <CommuteCard label="Evening commute" sublabel={hasWork ? `At ${data.locations.work.name}` : null} windowLabel={`${prefs.eveningStart} – ${prefs.eveningEnd}`} verdict={eveningVerdict} />
+                            <CommuteCard
+                              label="Morning commute"
+                              sublabel={hasWork ? `At ${data.locations.home.name}` : null}
+                              windowLabel={`${prefs.morningStart} – ${prefs.morningEnd}`}
+                              verdict={morningVerdict}
+                            />
+                            <CommuteCard
+                              label="Evening commute"
+                              sublabel={hasWork ? `At ${data.locations.work.name}` : null}
+                              windowLabel={`${prefs.eveningStart} – ${prefs.eveningEnd}`}
+                              verdict={eveningVerdict}
+                            />
                           </div>
                         )}
 
@@ -1207,10 +1769,10 @@ function App() {
 
                         {hasWork && !noCommute && (
                           <div className="flex gap-2">
-                            <button onClick={() => setHourlyLoc("home")} className={`flex-1 rounded-lg py-1.5 text-sm font-mono tracking-wide border ${hourlyLoc === "home" ? "bg-zinc-800 border-zinc-600 text-zinc-100" : "border-zinc-800 text-zinc-500"}`}>
+                            <button type="button" onClick={() => setHourlyLoc("home")} className={`flex-1 rounded-lg py-1.5 text-sm font-mono tracking-wide border ${hourlyLoc === "home" ? "bg-zinc-800 border-zinc-600 text-zinc-100" : "border-zinc-800 text-zinc-500"}`}>
                               HOME READOUT
                             </button>
-                            <button onClick={() => setHourlyLoc("work")} className={`flex-1 rounded-lg py-1.5 text-sm font-mono tracking-wide border ${hourlyLoc === "work" ? "bg-zinc-800 border-zinc-600 text-zinc-100" : "border-zinc-800 text-zinc-500"}`}>
+                            <button type="button" onClick={() => setHourlyLoc("work")} className={`flex-1 rounded-lg py-1.5 text-sm font-mono tracking-wide border ${hourlyLoc === "work" ? "bg-zinc-800 border-zinc-600 text-zinc-100" : "border-zinc-800 text-zinc-500"}`}>
                               WORK READOUT
                             </button>
                           </div>
@@ -1229,10 +1791,11 @@ function App() {
                               )}
                               <div className="relative flex items-end gap-1 h-20">
                                 {hourEvals.map(({ hour, ev }, i) => {
-                                  const pct = Math.max(((hour.temp - minTemp) / tempRange) * 100, 8);
+                                  const t = isNum(hour.temp) ? hour.temp : minTemp;
+                                  const pct = Math.max(((t - minTemp) / tempRange) * 100, 8);
                                   return (
                                     <div key={i} className="flex flex-col items-center justify-end h-full w-3 shrink-0">
-                                      <div title={`${hour.hourLabel} — ${Math.round(hour.temp)}°F`} className={`w-2.5 rounded-t ${ev.good ? "bg-emerald-500" : "bg-red-500"}`} style={{ height: `${pct}%` }} />
+                                      <div title={`${hour.hourLabel} — ${isNum(hour.temp) ? Math.round(hour.temp) + "°" : "—"}`} className={`w-2.5 rounded-t ${ev.good ? "bg-emerald-500" : "bg-red-500"}`} style={{ height: `${pct}%` }} />
                                       <div className={`w-1 h-1 rounded-full mt-1 ${!noCommute && (inMorningWindow(hour) || inEveningWindow(hour)) ? "bg-amber-400" : "bg-transparent"}`} />
                                     </div>
                                   );
@@ -1261,23 +1824,34 @@ function App() {
                           <h3 className="text-sm font-semibold uppercase tracking-widest text-amber-400 mb-3">Hour by hour</h3>
                           <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
                             {hourEvals.map(({ hour, ev }, i) => {
-                              const isDark = activeDay && activeDay.sun && (hour.iso < activeDay.sun.sunriseIso || hour.iso > activeDay.sun.sunsetIso);
+                              const isDark = activeDay && activeDay.sun && hourIsDark(hour, activeDay.sun);
                               return (
-                                <div key={i} className={`rounded-lg px-2 py-2 ${!noCommute && (inMorningWindow(hour) || inEveningWindow(hour)) ? "bg-zinc-800/70" : ""}`}>
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-mono text-sm text-zinc-300 w-10 shrink-0">{hour.hourLabel}</span>
-                                    <WeatherIcon category={ev.category} className="w-4 h-4 text-zinc-500 shrink-0" />
-                                    {isDark && <Moon className="w-3 h-3 text-zinc-600 shrink-0" />}
-                                    <span className="font-mono text-sm text-zinc-300 w-12 shrink-0">{Math.round(hour.temp)}°F</span>
-                                    <span className="flex items-center gap-1 text-sm text-zinc-500 w-11 shrink-0">
-                                      <Wind className="w-3 h-3 shrink-0" />{Math.round(hour.wind)}
-                                    </span>
-                                    {ev.good && <CheckCircle2 className="w-4 h-4 text-emerald-500 ml-auto shrink-0" />}
-                                  </div>
-                                  {!ev.good && (
-                                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                <div
+                                  key={i}
+                                  className={`rounded-lg px-2 py-1.5 flex items-center gap-1.5 min-w-0 ${
+                                    !noCommute && (inMorningWindow(hour) || inEveningWindow(hour)) ? "bg-zinc-800/70" : ""
+                                  }`}
+                                >
+                                  <span className="font-mono text-sm text-zinc-300 w-10 shrink-0">{hour.hourLabel}</span>
+                                  <WeatherIcon category={ev.category} className="w-4 h-4 text-zinc-500 shrink-0" />
+                                  {isDark && <Moon className="w-3 h-3 text-zinc-600 shrink-0" />}
+                                  <span className="font-mono text-sm text-zinc-300 w-10 shrink-0">{isNum(hour.temp) ? `${Math.round(hour.temp)}°` : "—"}</span>
+                                  <span className="flex items-center gap-1 text-sm text-zinc-500 w-11 shrink-0">
+                                    <Wind className="w-3 h-3 shrink-0" />
+                                    {isNum(hour.wind) ? Math.round(hour.wind) : "—"}
+                                  </span>
+                                  {ev.good ? (
+                                    <CheckCircle2 className="w-4 h-4 text-emerald-500 ml-auto shrink-0" />
+                                  ) : (
+                                    <div className="flex items-center gap-1 min-w-0 flex-1 justify-end">
                                       {ev.reasons.slice(0, 2).map((r, ri) => (
-                                        <span key={ri} className="text-sm text-red-300 bg-red-500/10 border border-red-900 rounded px-1.5 py-0.5">{r}</span>
+                                        <span
+                                          key={ri}
+                                          className="hour-reason-pill text-sm text-red-300 bg-red-500/10 border border-red-900 rounded px-1.5 py-0.5 truncate"
+                                          title={r}
+                                        >
+                                          {r}
+                                        </span>
                                       ))}
                                     </div>
                                   )}
