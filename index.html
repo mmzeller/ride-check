@@ -28,11 +28,11 @@
   }
   .safe-top { padding-top: calc(env(safe-area-inset-top, 0px) + 0.75rem); }
   .safe-bottom-pad { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 2.5rem); }
-  .ride-score-card { padding-bottom: 1.15rem; }
-  .ride-score-title { margin-bottom: 0.5rem; }
+  .ride-score-card { padding: 1.15rem 1.1rem 1.25rem; }
+  .ride-score-title { margin-bottom: 0.65rem; }
   .ride-score-label {
-    margin-top: 0.35rem;
-    margin-bottom: 1.35rem;
+    margin-top: 0.45rem;
+    margin-bottom: 1.5rem;
   }
   .hour-reason-pill {
     max-width: 9.5rem;
@@ -104,6 +104,221 @@
       filter: blur(0);
     }
   }
+
+  .app-shell {
+    background-color: #09090b;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(245, 158, 11, 0.07), transparent 55%),
+      linear-gradient(180deg, #09090b 0%, #0c0c0e 100%);
+  }
+  .header-chrome { position: relative; }
+  .moto-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.6rem;
+    background: linear-gradient(145deg, rgba(245,158,11,0.18), rgba(245,158,11,0.05));
+    border: 1px solid rgba(245,158,11,0.35);
+    box-shadow: 0 0 16px rgba(245,158,11,0.12);
+  }
+  .road-stripe {
+    position: absolute;
+    left: 1rem;
+    right: 1rem;
+    bottom: 0;
+    height: 2px;
+    background: repeating-linear-gradient(
+      90deg,
+      #f59e0b 0,
+      #f59e0b 10px,
+      transparent 10px,
+      transparent 18px
+    );
+    opacity: 0.35;
+    pointer-events: none;
+  }
+  .seg-tabs {
+    position: relative;
+    display: flex;
+    border-radius: 0.75rem;
+    border: 1px solid #27272a;
+    background: #18181b;
+    padding: 0.25rem;
+    overflow: hidden;
+  }
+  .seg-indicator {
+    position: absolute;
+    top: 0.25rem;
+    bottom: 0.25rem;
+    border-radius: 0.5rem;
+    background: #f59e0b;
+    box-shadow: 0 2px 12px rgba(245, 158, 11, 0.35);
+    transition: left 0.38s cubic-bezier(0.22, 1, 0.36, 1), width 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+    z-index: 0;
+    pointer-events: none;
+  }
+  .seg-tab {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    padding: 0.4rem 0.5rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    letter-spacing: 0.05em;
+    color: #a1a1aa;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: color 0.25s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+  }
+  .seg-tab-active {
+    color: #09090b;
+    font-weight: 700;
+  }
+  .seg-tab-icon {
+    display: inline-flex;
+  }
+  .day-strip {
+    position: relative;
+    display: flex;
+    gap: 0.375rem;
+  }
+  .day-strip-indicator {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-radius: 0.75rem;
+    background: #f59e0b;
+    border: 1px solid #f59e0b;
+    box-shadow: 0 2px 14px rgba(245, 158, 11, 0.3);
+    transition: left 0.4s cubic-bezier(0.22, 1, 0.36, 1), width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    z-index: 0;
+    pointer-events: none;
+  }
+  .day-strip-btn {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    border-radius: 0.75rem;
+    padding: 0.5rem 0.15rem;
+    font-size: 0.875rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    letter-spacing: 0.05em;
+    border: 1px solid #27272a;
+    background: #18181b;
+    color: #a1a1aa;
+    cursor: pointer;
+    transition: color 0.25s ease, border-color 0.25s ease, background-color 0.25s ease;
+  }
+  .day-strip-btn-active {
+    color: #09090b;
+    font-weight: 700;
+    border-color: transparent;
+    background: transparent;
+  }
+  .view-panel {
+    animation: view-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes view-in {
+    0% {
+      opacity: 0;
+      transform: translateY(12px) scale(0.985);
+      filter: blur(2px);
+    }
+    60% {
+      filter: blur(0);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: blur(0);
+    }
+  }
+  .moto-idle {
+    animation: moto-float 2.4s ease-in-out infinite;
+  }
+  @keyframes moto-float {
+    0%, 100% { transform: translateY(0); opacity: 0.45; }
+    50% { transform: translateY(-6px); opacity: 0.75; }
+  }
+  .empty-ride {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .ride-score-card {
+    position: relative;
+    overflow: hidden;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .view-panel, .seg-indicator, .day-strip-indicator, .moto-idle, .indicator-bubble {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+
+
+  .main-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+  }
+  .section-card {
+    padding: 1.15rem 1.1rem 1.25rem;
+  }
+  .section-card-title {
+    margin-bottom: 0.9rem;
+  }
+  .section-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .card-pad {
+    padding: 1.15rem 1.1rem 1.2rem;
+  }
+  .commute-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+  .commute-group-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #a1a1aa;
+  }
+  .time-input {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 0.65rem 0.65rem;
+    -webkit-appearance: none;
+    appearance: none;
+    color-scheme: dark;
+  }
+  .field-box {
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
+  }
+  .time-input::-webkit-calendar-picker-indicator {
+    opacity: 0.45;
+    filter: invert(1);
+    cursor: pointer;
+  }
+  /* Keep native time controls from overflowing narrow grid cells on iOS */
+  input[type="time"].time-input {
+    display: block;
+  }
+
 </style>
 </head>
 <body>
@@ -138,6 +353,57 @@ const IconBase = ({ children, className }) => (
   </svg>
 );
 const Bike = (p) => <IconBase className={p.className}><circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M6 17 9 10h5l3 7"/><path d="M9 10 8 6h3"/></IconBase>;
+
+/** Sportbike side profile for empty/loading accents */
+function MotoSilhouette({ className }) {
+  return (
+    <svg viewBox="0 0 120 64" className={className} fill="none" aria-hidden="true">
+      <ellipse cx="28" cy="48" rx="14" ry="14" stroke="currentColor" strokeWidth="3" />
+      <ellipse cx="92" cy="48" rx="14" ry="14" stroke="currentColor" strokeWidth="3" />
+      <circle cx="28" cy="48" r="5" fill="currentColor" opacity="0.35" />
+      <circle cx="92" cy="48" r="5" fill="currentColor" opacity="0.35" />
+      <path d="M42 48h30" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <path d="M55 48 48 28h18l8 12" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M48 28 40 22H28" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M66 28h14l10 14" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M80 22h12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M42 36h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+    </svg>
+  );
+}
+
+function SegmentedTabs({ options, value, onChange, className }) {
+  const idx = Math.max(0, options.findIndex((o) => o.value === value));
+  const n = options.length || 1;
+  return (
+    <div className={`seg-tabs ${className || ""}`} role="tablist">
+      <div
+        className="seg-indicator"
+        style={{
+          width: `calc((100% - 0.5rem) / ${n})`,
+          left: `calc(0.25rem + ${idx} * ((100% - 0.5rem) / ${n}))`,
+        }}
+      />
+      {options.map((o) => {
+        const active = o.value === value;
+        return (
+          <button
+            key={o.value}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            onClick={() => onChange(o.value)}
+            className={`seg-tab ${active ? "seg-tab-active" : ""}`}
+          >
+            {o.icon ? <span className="seg-tab-icon">{o.icon}</span> : null}
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 const Settings2 = (p) => <IconBase className={p.className}><path d="M4 6h6"/><path d="M14 6h6"/><circle cx="12" cy="6" r="2"/><path d="M4 12h2"/><path d="M10 12h10"/><circle cx="7" cy="12" r="2"/><path d="M4 18h10"/><path d="M18 18h2"/><circle cx="16" cy="18" r="2"/></IconBase>;
 const MapPin = (p) => <IconBase className={p.className}><path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></IconBase>;
 const Search = (p) => <IconBase className={p.className}><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></IconBase>;
@@ -632,8 +898,8 @@ function Toggle({ checked, onChange, label, hint }) {
 function NumberField({ label, value, onChange, min, max, step = 1, unit }) {
   return (
     <label className="block">
-      <span className="block text-sm uppercase tracking-wider text-zinc-500 mb-1">{label}</span>
-      <div className="flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 focus-within:ring-2 focus-within:ring-amber-400 focus-within:border-amber-400">
+      <span className="block text-sm uppercase tracking-wide text-zinc-500 mb-1">{label}</span>
+      <div className="flex items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 field-box focus-within:ring-2 focus-within:ring-amber-400 focus-within:border-amber-400">
         <input
           type="number"
           value={value}
@@ -658,13 +924,13 @@ function NumberField({ label, value, onChange, min, max, step = 1, unit }) {
 
 function TimeField({ label, value, onChange }) {
   return (
-    <label className="block">
-      <span className="block text-sm uppercase tracking-wider text-zinc-500 mb-1">{label}</span>
+    <label className="block min-w-0">
+      <span className="block text-sm uppercase tracking-wide text-zinc-500 mb-1 truncate">{label}</span>
       <input
         type="time"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 font-mono text-lg text-zinc-100 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400"
+        className="time-input w-full min-w-0 rounded-lg border border-zinc-700 bg-zinc-800 font-mono text-base text-zinc-100 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400"
       />
     </label>
   );
@@ -672,9 +938,9 @@ function TimeField({ label, value, onChange }) {
 
 function SectionCard({ title, children }) {
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
-      <h3 className="text-sm font-semibold uppercase tracking-widest text-amber-400 mb-3">{title}</h3>
-      <div className="space-y-3">{children}</div>
+    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 section-card">
+      <h3 className="text-sm font-semibold uppercase tracking-widest text-amber-400 section-card-title">{title}</h3>
+      <div className="section-card-body">{children}</div>
     </div>
   );
 }
@@ -793,7 +1059,7 @@ function CommuteCard({ label, sublabel, windowLabel, verdict }) {
   const good = verdict.status === "good";
   const unknown = verdict.status === "unknown";
   return (
-    <div className={`rounded-2xl border p-4 ${unknown ? "border-zinc-800 bg-zinc-900" : good ? "border-emerald-800 bg-emerald-500/10" : "border-red-800 bg-red-500/10"}`}>
+    <div className={`rounded-2xl border card-pad ${unknown ? "border-zinc-800 bg-zinc-900" : good ? "border-emerald-800 bg-emerald-500/10" : "border-red-800 bg-red-500/10"}`}>
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="text-sm uppercase tracking-widest text-zinc-500">{label}</div>
@@ -967,8 +1233,11 @@ function RideGaugeCard({ score, flags }) {
   const label = !known ? "NO DATA" : score >= 90 ? "GO" : score >= 50 ? "CAUTION" : "NO-GO";
   const labelColor = !known ? "text-zinc-600" : score >= 90 ? "text-emerald-400" : score >= 50 ? "text-amber-400" : "text-red-400";
   return (
-    <div className="carbon-texture rounded-2xl border border-zinc-800 p-4 ride-score-card shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-      <h3 className="text-sm font-semibold uppercase tracking-widest text-amber-400 text-center ride-score-title">Ride Score</h3>
+    <div className="carbon-texture rounded-2xl border border-zinc-800 ride-score-card shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+      <div className="flex items-center justify-center gap-2 ride-score-title">
+        <MotoSilhouette className="w-10 h-5 text-amber-500/50 shrink-0" />
+        <h3 className="text-sm font-semibold uppercase tracking-widest text-amber-400">Ride Score</h3>
+      </div>
       <RideGauge score={score} />
       <div className={`text-center font-mono font-bold tracking-widest text-base ride-score-label ${labelColor}`}>{label}</div>
       <WarningLights flags={flags} />
@@ -979,7 +1248,7 @@ function RideGaugeCard({ score, flags }) {
 function GearCard({ gear }) {
   if (!gear) return null;
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 card-pad">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold uppercase tracking-widest text-amber-400">Gear check</h3>
         {gear.tempLabel && <span className="text-sm font-mono text-zinc-500">{gear.tempLabel}</span>}
@@ -1475,17 +1744,21 @@ function App() {
 
   if (!loaded) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+      <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center gap-4">
+        <MotoSilhouette className="w-28 h-14 text-amber-500/40 moto-idle" />
         <Loader2 className="w-6 h-6 text-amber-400 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans safe-bottom-pad">
-      <header className="sticky top-0 z-10 bg-zinc-950/95 backdrop-blur border-b border-zinc-800 px-4 pb-3 safe-top flex items-center justify-between gap-2">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans safe-bottom-pad app-shell">
+      <header className="sticky top-0 z-10 bg-zinc-950/95 backdrop-blur border-b border-zinc-800 px-4 pb-3 safe-top header-chrome">
+        <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 shrink-0">
-          <Bike className="w-5 h-5 text-amber-400" />
+          <span className="moto-badge" aria-hidden="true">
+            <Bike className="w-5 h-5 text-amber-400" />
+          </span>
           <span className="font-mono font-bold tracking-widest text-sm">RIDE CHECK</span>
         </div>
         {data && !editing && (
@@ -1512,9 +1785,11 @@ function App() {
             </button>
           </div>
         )}
+        </div>
+        <div className="road-stripe" aria-hidden="true" />
       </header>
 
-      <main className="max-w-md mx-auto px-4 py-4 space-y-4">
+      <main className="max-w-md mx-auto px-4 py-5 main-stack">
         {editing ? (
           <div className="space-y-4">
             <SectionCard title="Home location">
@@ -1527,31 +1802,31 @@ function App() {
             </SectionCard>
 
             <SectionCard title="Units">
-              <div className="flex rounded-xl border border-zinc-800 p-1 bg-zinc-950">
-                <button
-                  type="button"
-                  onClick={() => setFormPrefs((p) => convertPrefsUnits(p, false))}
-                  className={`flex-1 py-1.5 rounded-lg text-sm font-mono tracking-wide ${formPrefs.units !== "metric" ? "bg-amber-500 text-zinc-950 font-bold" : "text-zinc-400"}`}
-                >
-                  °F / mph
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFormPrefs((p) => convertPrefsUnits(p, true))}
-                  className={`flex-1 py-1.5 rounded-lg text-sm font-mono tracking-wide ${formPrefs.units === "metric" ? "bg-amber-500 text-zinc-950 font-bold" : "text-zinc-400"}`}
-                >
-                  °C / km/h
-                </button>
-              </div>
+              <SegmentedTabs
+                value={formPrefs.units === "metric" ? "metric" : "imperial"}
+                onChange={(v) => setFormPrefs((p) => convertPrefsUnits(p, v === "metric"))}
+                options={[
+                  { value: "imperial", label: "°F / mph" },
+                  { value: "metric", label: "°C / km/h" },
+                ]}
+              />
             </SectionCard>
 
             <SectionCard title="Commute times">
               <p className="text-sm text-zinc-500">Overnight windows (e.g. 22:00–06:00) are supported.</p>
-              <div className="grid grid-cols-2 gap-3">
-                <TimeField label="Morning start" value={formPrefs.morningStart} onChange={(v) => setFormPrefs({ ...formPrefs, morningStart: v })} />
-                <TimeField label="Morning end" value={formPrefs.morningEnd} onChange={(v) => setFormPrefs({ ...formPrefs, morningEnd: v })} />
-                <TimeField label="Evening start" value={formPrefs.eveningStart} onChange={(v) => setFormPrefs({ ...formPrefs, eveningStart: v })} />
-                <TimeField label="Evening end" value={formPrefs.eveningEnd} onChange={(v) => setFormPrefs({ ...formPrefs, eveningEnd: v })} />
+              <div className="commute-group">
+                <div className="commute-group-label">Morning</div>
+                <div className="grid grid-cols-2 gap-3">
+                  <TimeField label="Start" value={formPrefs.morningStart} onChange={(v) => setFormPrefs({ ...formPrefs, morningStart: v })} />
+                  <TimeField label="End" value={formPrefs.morningEnd} onChange={(v) => setFormPrefs({ ...formPrefs, morningEnd: v })} />
+                </div>
+              </div>
+              <div className="commute-group">
+                <div className="commute-group-label">Evening</div>
+                <div className="grid grid-cols-2 gap-3">
+                  <TimeField label="Start" value={formPrefs.eveningStart} onChange={(v) => setFormPrefs({ ...formPrefs, eveningStart: v })} />
+                  <TimeField label="End" value={formPrefs.eveningEnd} onChange={(v) => setFormPrefs({ ...formPrefs, eveningEnd: v })} />
+                </div>
               </div>
             </SectionCard>
 
@@ -1667,31 +1942,42 @@ function App() {
             )}
 
             {loadingWeather && !weatherHome ? (
-              <div className="flex items-center justify-center py-20">
+              <div className="flex flex-col items-center justify-center py-20 gap-4">
+                <MotoSilhouette className="w-28 h-14 text-amber-500/30 moto-idle" />
                 <Loader2 className="w-6 h-6 text-amber-400 animate-spin" />
+                <span className="text-sm text-zinc-500 font-mono tracking-wide">Checking conditions…</span>
               </div>
             ) : homeDays.length > 0 ? (
               <>
-                <div className="flex rounded-xl border border-zinc-800 p-1 bg-zinc-900">
-                  <button type="button" onClick={() => setMainView("daily")} className={`flex-1 py-1.5 rounded-lg text-sm font-mono tracking-wide ${mainView === "daily" ? "bg-amber-500 text-zinc-950 font-bold" : "text-zinc-400"}`}>
-                    DAILY
-                  </button>
-                  <button type="button" onClick={() => setMainView("week")} className={`flex-1 py-1.5 rounded-lg text-sm font-mono tracking-wide ${mainView === "week" ? "bg-amber-500 text-zinc-950 font-bold" : "text-zinc-400"}`}>
-                    WEEK
-                  </button>
-                </div>
+                <SegmentedTabs
+                  value={mainView}
+                  onChange={setMainView}
+                  options={[
+                    { value: "daily", label: "DAILY" },
+                    { value: "week", label: "WEEK" },
+                  ]}
+                />
 
                 {mainView === "week" ? (
-                  <WeekView homeDays={homeDays} workDays={workDays} hasWork={hasWork} prefs={prefs} daysOff={daysOff} onSelectDay={(i) => { setDayIndex(i); setMainView("daily"); }} />
+                  <div key="week" className="view-panel">
+                    <WeekView homeDays={homeDays} workDays={workDays} hasWork={hasWork} prefs={prefs} daysOff={daysOff} onSelectDay={(i) => { setDayIndex(i); setMainView("daily"); }} />
+                  </div>
                 ) : (
-                  <>
-                    <div className="flex gap-1.5">
+                  <div key={`daily-${homeDay && homeDay.date}`} className="view-panel">
+                    <div className="day-strip">
+                      <div
+                        className="day-strip-indicator"
+                        style={{
+                          width: `calc((100% - ${(homeDays.length - 1) * 0.375}rem) / ${homeDays.length || 1})`,
+                          left: `calc(${dayIndex} * ((100% - ${(homeDays.length - 1) * 0.375}rem) / ${homeDays.length || 1} + 0.375rem))`,
+                        }}
+                      />
                       {homeDays.map((d, i) => (
                         <button
                           key={d.date}
                           type="button"
                           onClick={() => setDayIndex(i)}
-                          className={`flex-1 rounded-xl py-2 text-sm font-mono tracking-wide border ${i === dayIndex ? "bg-amber-500 text-zinc-950 border-amber-500 font-bold" : "bg-zinc-900 text-zinc-400 border-zinc-800"}`}
+                          className={`day-strip-btn ${i === dayIndex ? "day-strip-btn-active" : ""}`}
                         >
                           {d.isToday ? "TODAY" : d.shortLabel.toUpperCase()}
                         </button>
@@ -1716,7 +2002,10 @@ function App() {
                     )}
 
                     {!homeDay || homeDay.hours.length === 0 ? (
-                      <div className="text-center text-zinc-500 text-sm py-10">No more riding hours left today.</div>
+                      <div className="text-center text-zinc-500 text-sm py-10 empty-ride">
+                        <MotoSilhouette className="w-24 h-12 mx-auto text-zinc-700 mb-3" />
+                        No more riding hours left today.
+                      </div>
                     ) : (
                       <>
                         {!noCommute && <RideGaugeCard score={rideScore} flags={warningFlags} />}
@@ -1758,7 +2047,7 @@ function App() {
                         <GearCard gear={gear} />
 
                         {homeDay.isToday && (
-                          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+                          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 card-pad">
                             <h3 className="text-sm font-semibold uppercase tracking-widest text-amber-400 mb-3">Log today's ride</h3>
                             <div className="flex gap-2">
                               <LogToggleButton label="Rode this morning" active={!!(rideLog[todayKey] && rideLog[todayKey].morning)} onClick={() => toggleLog(todayKey, "morning")} />
@@ -1768,17 +2057,17 @@ function App() {
                         )}
 
                         {hasWork && !noCommute && (
-                          <div className="flex gap-2">
-                            <button type="button" onClick={() => setHourlyLoc("home")} className={`flex-1 rounded-lg py-1.5 text-sm font-mono tracking-wide border ${hourlyLoc === "home" ? "bg-zinc-800 border-zinc-600 text-zinc-100" : "border-zinc-800 text-zinc-500"}`}>
-                              HOME READOUT
-                            </button>
-                            <button type="button" onClick={() => setHourlyLoc("work")} className={`flex-1 rounded-lg py-1.5 text-sm font-mono tracking-wide border ${hourlyLoc === "work" ? "bg-zinc-800 border-zinc-600 text-zinc-100" : "border-zinc-800 text-zinc-500"}`}>
-                              WORK READOUT
-                            </button>
-                          </div>
+                          <SegmentedTabs
+                            value={hourlyLoc}
+                            onChange={setHourlyLoc}
+                            options={[
+                              { value: "home", label: "HOME" },
+                              { value: "work", label: "WORK" },
+                            ]}
+                          />
                         )}
 
-                        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+                        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 card-pad">
                           <h3 className="text-sm font-semibold uppercase tracking-widest text-amber-400 mb-3">Hourly readout</h3>
                           <div className="overflow-x-auto">
                             <div className="relative min-w-max">
@@ -1820,7 +2109,7 @@ function App() {
                           </div>
                         </div>
 
-                        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+                        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 card-pad">
                           <h3 className="text-sm font-semibold uppercase tracking-widest text-amber-400 mb-3">Hour by hour</h3>
                           <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
                             {hourEvals.map(({ hour, ev }, i) => {
@@ -1862,11 +2151,14 @@ function App() {
                         </div>
                       </>
                     )}
-                  </>
+                  </div>
                 )}
               </>
             ) : (
-              <div className="text-center text-zinc-500 text-sm py-20">No forecast loaded yet.</div>
+              <div className="text-center text-zinc-500 text-sm py-20 empty-ride">
+                <MotoSilhouette className="w-28 h-14 mx-auto text-zinc-700 mb-3" />
+                <div>No forecast loaded yet.</div>
+              </div>
             )}
           </>
         )}
