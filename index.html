@@ -1685,7 +1685,12 @@ function App() {
     if (!dateKey) return;
     setRideLog((prev) => {
       const entry = { ...(prev[dateKey] || { morning: false, evening: false }) };
-      entry[leg] = !entry[leg];
+      const turningOn = !entry[leg];
+      entry[leg] = turningOn;
+      // Riding in implies riding home on the same bike — auto-check the return leg.
+      // Only auto-links on the way up; unchecking one leg doesn't touch the other,
+      // so a genuine one-way day can still be corrected by hand.
+      if (leg === "morning" && turningOn) entry.evening = true;
       const next = { ...prev, [dateKey]: entry };
       if (!entry.morning && !entry.evening) {
         delete next[dateKey];
