@@ -403,6 +403,10 @@
   .week-row:hover {
     border-color: #3f3f46;
   }
+  .week-row-today {
+    border-color: rgba(245, 158, 11, 0.55);
+    background: rgba(245, 158, 11, 0.06);
+  }
   .week-row-icon { flex-shrink: 0; }
   .week-row-day { min-width: 0; }
   .week-row-mid {
@@ -1471,7 +1475,8 @@ function BestWindowCard({ window }) {
   );
 }
 
-function WeekRow({ day, workDay, prefs, onSelect, noCommute }) {
+/** Shared per-day summary used by both week rows and the best-day banner. */
+function computeDaySummary(day, workDay, prefs, noCommute) {
   const morningHrs = hoursInWindow(day.hours, prefs.morningStart, prefs.morningEnd);
   const eveningHrs = hoursInWindow(workDay.hours, prefs.eveningStart, prefs.eveningEnd);
   const morning = commuteVerdict(morningHrs, prefs, day.sun);
@@ -1494,6 +1499,41 @@ function WeekRow({ day, workDay, prefs, onSelect, noCommute }) {
         conditionFlags(morningHrs, prefs, day.sun),
         conditionFlags(eveningHrs, prefs, workDay.sun)
       );
+
+  return { morning, evening, hi, lo, midCategory, dayScore, flags };
+}
+
+function BestDayBanner({ homeDays, workDays, hasWork, prefs, daysOff, onSelect }) {
+  let best = null;
+  homeDays.forEach((d, i) => {
+    const workDay = hasWork && workDays[i] ? workDays[i] : d;
+    const noCommute = d.isWeekend || !!daysOff[d.date];
+    const { dayScore } = computeDaySummary(d, workDay, prefs, noCommute);
+    if (dayScore != null && (!best || dayScore > best.dayScore)) {
+      best = { index: i, date: d.date, label: d.isToday ? "Today" : d.dateLabel, dayScore };
+    }
+  });
+  if (!best || best.dayScore < 50) return null;
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(best.index)}
+      className="w-full flex items-center justify-between gap-3 rounded-2xl border border-emerald-800 bg-emerald-500/10 px-4 py-3 text-left"
+    >
+      <span className="flex items-center gap-2 min-w-0">
+        <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+        <span className="min-w-0">
+          <span className="block text-sm uppercase tracking-widest text-zinc-500">Best day this week</span>
+          <span className="block text-base text-emerald-300 font-semibold truncate">{best.label}</span>
+        </span>
+      </span>
+      <ScoreChip score={best.dayScore} />
+    </button>
+  );
+}
+
+function WeekRow({ day, workDay, prefs, onSelect, noCommute, offReason, logged }) {
+  const { morning, evening, hi, lo, midCategory, dayScore, flags } = computeDaySummary(day, workDay, prefs, noCommute);
   const issueIcons = [
     flags.rain && CloudRain,
     flags.wind && Wind,
@@ -1504,7 +1544,7 @@ function WeekRow({ day, workDay, prefs, onSelect, noCommute }) {
   ].filter(Boolean).slice(0, 3);
 
   return (
-    <button type="button" onClick={onSelect} className="week-row">
+    <button type="button" onClick={onSelect} className={`week-row ${day.isToday ? "week-row-today" : ""}`}>
       <WeatherIcon category={midCategory} className="w-5 h-5 text-zinc-500 week-row-icon" />
       <div className="week-row-day">
         <div className="text-sm text-zinc-200">{day.isToday ? "Today" : day.shortLabel}</div>
@@ -1512,7 +1552,9 @@ function WeekRow({ day, workDay, prefs, onSelect, noCommute }) {
       </div>
       <div className="week-row-mid">
         {noCommute ? (
-          <span className="text-sm font-mono px-2 py-1 rounded-md border border-zinc-700 text-zinc-400">FREE</span>
+          <span className="text-sm font-mono px-2 py-1 rounded-md border border-zinc-700 text-zinc-400">
+            {offReason === "off" ? "DAY OFF" : "WEEKEND"}
+          </span>
         ) : (
           <>
             <VerdictPill label="AM" status={morning.status} />
@@ -1521,6 +1563,11 @@ function WeekRow({ day, workDay, prefs, onSelect, noCommute }) {
         )}
       </div>
       <div className="week-row-end">
+        {logged && (
+          <span title="Ride logged">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+          </span>
+        )}
         <span className="week-row-flags">
           {issueIcons.map((Icon, i) => <Icon key={i} className="w-3.5 h-3.5 text-amber-500/80" />)}
         </span>
@@ -1531,22 +1578,37 @@ function WeekRow({ day, workDay, prefs, onSelect, noCommute }) {
   );
 }
 
-function WeekView({ homeDays, workDays, hasWork, prefs, daysOff, onSelectDay }) {
+function WeekView({ homeDays, workDays, hasWork, prefs, daysOff, rideLog, onSelectDay }) {
   return (
     <div className="week-list">
-      {homeDays.map((d, i) => (
-        <WeekRow
-          key={d.date}
-          day={d}
-          workDay={hasWork && workDays[i] ? workDays[i] : d}
-          prefs={prefs}
-          onSelect={() => onSelectDay(i)}
-          noCommute={d.isWeekend || !!daysOff[d.date]}
-        />
-      ))}
+      <BestDayBanner
+        homeDays={homeDays}
+        workDays={workDays}
+        hasWork={hasWork}
+        prefs={prefs}
+        daysOff={daysOff}
+        onSelect={onSelectDay}
+      />
+      {homeDays.map((d, i) => {
+        const isOff = !!daysOff[d.date];
+        const log = rideLog[d.date];
+        return (
+          <WeekRow
+            key={d.date}
+            day={d}
+            workDay={hasWork && workDays[i] ? workDays[i] : d}
+            prefs={prefs}
+            onSelect={() => onSelectDay(i)}
+            noCommute={d.isWeekend || isOff}
+            offReason={isOff ? "off" : "weekend"}
+            logged={!!(log && (log.morning || log.evening))}
+          />
+        );
+      })}
     </div>
   );
 }
+
 
 function StatBlock({ label, value }) {
   return (
@@ -2168,7 +2230,7 @@ function App() {
 
                 {mainView === "week" ? (
                   <div key="week" className="view-panel">
-                    <WeekView homeDays={homeDays} workDays={workDays} hasWork={hasWork} prefs={prefs} daysOff={daysOff} onSelectDay={(i) => { setDayIndex(i); setMainView("daily"); }} />
+                    <WeekView homeDays={homeDays} workDays={workDays} hasWork={hasWork} prefs={prefs} daysOff={daysOff} rideLog={rideLog} onSelectDay={(i) => { setDayIndex(i); setMainView("daily"); }} />
                   </div>
                 ) : (
                   <div key={`daily-${homeDay && homeDay.date}`} className="view-panel">
