@@ -407,6 +407,9 @@
     border-color: rgba(245, 158, 11, 0.55);
     background: rgba(245, 158, 11, 0.06);
   }
+  .log-stats-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
   .week-row-icon { flex-shrink: 0; }
   .week-row-day { min-width: 0; }
   .week-row-mid {
@@ -541,6 +544,7 @@ const RefreshCw = (p) => <IconBase className={p.className}><path d="M3 12a9 9 0 
 const STORAGE_KEY = "ride-check-data";
 const STORAGE_KEY_LOG = "ride-check-log";
 const STORAGE_KEY_DAYSOFF = "ride-check-days-off";
+const STORAGE_KEY_CACHE = "ride-check-forecast-cache";
 const REFRESH_MS = 30 * 60 * 1000;
 
 const DEFAULT_PREFS = {
@@ -636,6 +640,13 @@ function nowKeyForTz(tz) {
   } catch (e) {
     return new Date().toISOString().slice(0, 16);
   }
+}
+
+/** Shift a "YYYY-MM-DD" date key by N days (UTC-safe, no DST edge cases). */
+function shiftDateKey(dateKey, deltaDays) {
+  const d = new Date(dateKey + "T12:00:00Z");
+  d.setUTCDate(d.getUTCDate() + deltaDays);
+  return d.toISOString().slice(0, 10);
 }
 
 function labelPartsInTz(dateKey, tz) {
@@ -951,12 +962,83 @@ function dayOverallScore(hours, prefs, sun) {
   return Math.round((s.good / s.total) * 100);
 }
 
+/** Average temp/wind across a set of hours, ignoring missing readings. */
+function windowAvgStats(hours) {
+  if (!hours || !hours.length) return null;
+  const temps = hours.map((h) => h.temp).filter(isNum);
+  const winds = hours.map((h) => h.wind).filter(isNum);
+  if (!temps.length && !winds.length) return null;
+  return {
+    avgTemp: temps.length ? temps.reduce((a, b) => a + b, 0) / temps.length : null,
+    avgWind: winds.length ? winds.reduce((a, b) => a + b, 0) / winds.length : null,
+  };
+}
+
+/** Plain-language "vs yesterday" line comparing two windowAvgStats results. */
+function describeVsYesterday(today, yesterday, tempUnit) {
+  if (!today || !yesterday) return null;
+  const parts = [];
+  if (isNum(today.avgTemp) && isNum(yesterday.avgTemp)) {
+    const d = Math.round(today.avgTemp - yesterday.avgTemp);
+    if (d >= 2) parts.push(`${d}${tempUnit} warmer`);
+    else if (d <= -2) parts.push(`${Math.abs(d)}${tempUnit} colder`);
+  }
+  if (isNum(today.avgWind) && isNum(yesterday.avgWind)) {
+    const d = Math.round(today.avgWind - yesterday.avgWind);
+    if (d >= 3) parts.push("windier");
+    else if (d <= -3) parts.push("calmer");
+  }
+  if (!parts.length) return "About the same as yesterday's commute.";
+  return `${parts.join(", ")} than yesterday's commute.`;
+}
+
+function AlertBanner({ alert }) {
+  const severe = alert.severity === "Extreme" || alert.severity === "Severe";
+  const moderate = alert.severity === "Moderate";
+  const cls = severe
+    ? "border-red-800 bg-red-500/10 text-red-300"
+    : moderate
+    ? "border-amber-800 bg-amber-500/10 text-amber-300"
+    : "border-zinc-700 bg-zinc-800/60 text-zinc-300";
+  return (
+    <div className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-sm ${cls}`} role="alert">
+      <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+      <span className="min-w-0">
+        <span className="font-semibold">{alert.event}</span>
+        {alert.where && <span className="text-zinc-500"> · {alert.where}</span>}
+        {alert.headline && <span className="block text-zinc-400 font-normal mt-0.5">{alert.headline}</span>}
+      </span>
+    </div>
+  );
+}
+
 function ScoreChip({ score }) {
   if (score === null || score === undefined) {
     return <span className="text-sm font-mono text-zinc-600">—</span>;
   }
   const color = score >= 90 ? "text-emerald-400" : score >= 50 ? "text-amber-400" : "text-red-400";
   return <span className={`text-sm font-mono font-bold tabular-nums ${color}`}>{score}</span>;
+}
+
+/** Best-effort fetch of active NWS severe weather alerts for a point. US-only; fails quietly elsewhere. */
+async function fetchAlerts(lat, lon) {
+  try {
+    const r = await fetch(`https://api.weather.gov/alerts/active?point=${lat},${lon}`, {
+      headers: { Accept: "application/geo+json" },
+    });
+    if (!r.ok) return [];
+    const j = await r.json();
+    if (!j || !j.features) return [];
+    return j.features.map((f) => ({
+      id: f.properties.id,
+      event: f.properties.event,
+      severity: f.properties.severity,
+      headline: f.properties.headline,
+      expiresIso: f.properties.expires,
+    }));
+  } catch (e) {
+    return [];
+  }
 }
 
 function computeDays(weather) {
@@ -999,10 +1081,14 @@ function computeDays(weather) {
     });
   });
 
-  return Object.entries(grouped)
-    .sort(([a], [b]) => a.localeCompare(b))
+  const sortedDates = Object.keys(grouped).sort();
+  const yesterdayDateKey = shiftDateKey(todayDateKey, -1);
+
+  const mainDays = sortedDates
+    .filter((date) => date >= todayDateKey)
     .slice(0, 7)
-    .map(([date, hours]) => {
+    .map((date) => {
+      const hours = grouped[date];
       const isToday = date === todayDateKey;
       const filteredHours = isToday ? hours.filter((x) => x.iso >= nowHourKey) : hours;
       const labels = labelPartsInTz(date, tz);
@@ -1017,6 +1103,14 @@ function computeDays(weather) {
         timezone: tz,
       };
     });
+
+  // Yesterday's actual hours (from past_days=1) aren't shown as a tab, but are
+  // stashed on the array for "vs yesterday" comparisons against today's commute.
+  mainDays.yesterday = grouped[yesterdayDateKey]
+    ? { date: yesterdayDateKey, hours: grouped[yesterdayDateKey], sun: dailySun[yesterdayDateKey] }
+    : null;
+
+  return mainDays;
 }
 
 function clampNum(v, min, max) {
@@ -1684,6 +1778,7 @@ function App() {
   const [showLog, setShowLog] = useState(false);
   const [weatherHome, setWeatherHome] = useState(null);
   const [weatherWork, setWeatherWork] = useState(null);
+  const [alerts, setAlerts] = useState({ home: [], work: [] });
   const [loadingWeather, setLoadingWeather] = useState(false);
   const [error, setError] = useState(null);
   const [dayIndex, setDayIndex] = useState(0);
@@ -1692,7 +1787,9 @@ function App() {
   const [rideLog, setRideLog] = useState({});
   const [daysOff, setDaysOff] = useState({});
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [isStale, setIsStale] = useState(false);
   const locationsRef = useRef(null);
+  const touchStartRef = useRef(null);
 
   const [formPrefs, setFormPrefs] = useState(DEFAULT_PREFS);
   const [formLocations, setFormLocations] = useState({ home: null, work: null });
@@ -1714,26 +1811,55 @@ function App() {
         fetch(
           `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}` +
             `&hourly=temperature_2m,precipitation_probability,precipitation,windspeed_10m,windgusts_10m,visibility,weathercode,relative_humidity_2m` +
-            `&daily=sunrise,sunset&temperature_unit=${tempUnit}&windspeed_unit=${windUnit}&timezone=auto&forecast_days=7`
+            `&daily=sunrise,sunset&temperature_unit=${tempUnit}&windspeed_unit=${windUnit}&timezone=auto&forecast_days=7&past_days=1`
         ).then((r) => {
           if (!r.ok) throw new Error("bad response");
           return r.json();
         });
 
-      const [homeJson, workJson] = await Promise.all([
+      const [homeJson, workJson, homeAlerts, workAlerts] = await Promise.all([
         fetchOne(locations.home),
         locations.work ? fetchOne(locations.work) : Promise.resolve(null),
+        fetchAlerts(locations.home.lat, locations.home.lon),
+        locations.work ? fetchAlerts(locations.work.lat, locations.work.lon) : Promise.resolve([]),
       ]);
       setWeatherHome(homeJson);
       setWeatherWork(workJson);
+      setAlerts({ home: homeAlerts, work: workAlerts });
       setDayIndex(0);
-      setLastUpdated(Date.now());
+      const now = Date.now();
+      setLastUpdated(now);
+      setIsStale(false);
+      storage.set(STORAGE_KEY_CACHE, JSON.stringify({ homeJson, workJson, savedAt: now }));
     } catch (e) {
-      setError("Couldn't load the forecast. Check your connection and try again.");
+      const fellBack = await tryLoadCachedForecast();
+      if (fellBack) {
+        setError("Couldn't reach the forecast — showing the last saved one.");
+      } else {
+        setError("Couldn't load the forecast. Check your connection and try again.");
+      }
     } finally {
       setLoadingWeather(false);
     }
   }, [data]);
+
+  // Fall back to the last successfully fetched forecast when offline/unreachable.
+  const tryLoadCachedForecast = async () => {
+    try {
+      const res = await storage.get(STORAGE_KEY_CACHE);
+      if (!res || !res.value) return false;
+      const cached = JSON.parse(res.value);
+      if (!cached || !cached.homeJson) return false;
+      setWeatherHome(cached.homeJson);
+      setWeatherWork(cached.workJson || null);
+      setDayIndex(0);
+      setLastUpdated(cached.savedAt || null);
+      setIsStale(true);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
 
   const persistLog = async (log) => {
     try {
@@ -1804,20 +1930,31 @@ function App() {
                 fetch(
                   `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}` +
                     `&hourly=temperature_2m,precipitation_probability,precipitation,windspeed_10m,windgusts_10m,visibility,weathercode,relative_humidity_2m` +
-                    `&daily=sunrise,sunset&temperature_unit=${tempUnit}&windspeed_unit=${windUnit}&timezone=auto&forecast_days=7`
+                    `&daily=sunrise,sunset&temperature_unit=${tempUnit}&windspeed_unit=${windUnit}&timezone=auto&forecast_days=7&past_days=1`
                 ).then((r) => {
                   if (!r.ok) throw new Error("bad response");
                   return r.json();
                 });
-              const [homeJson, workJson] = await Promise.all([
+              const [homeJson, workJson, homeAlerts, workAlerts] = await Promise.all([
                 fetchOne(normalized.locations.home),
                 normalized.locations.work ? fetchOne(normalized.locations.work) : Promise.resolve(null),
+                fetchAlerts(normalized.locations.home.lat, normalized.locations.home.lon),
+                normalized.locations.work ? fetchAlerts(normalized.locations.work.lat, normalized.locations.work.lon) : Promise.resolve([]),
               ]);
               setWeatherHome(homeJson);
               setWeatherWork(workJson);
-              setLastUpdated(Date.now());
+              setAlerts({ home: homeAlerts, work: workAlerts });
+              const now = Date.now();
+              setLastUpdated(now);
+              setIsStale(false);
+              storage.set(STORAGE_KEY_CACHE, JSON.stringify({ homeJson, workJson, savedAt: now }));
             } catch (e) {
-              setError("Couldn't load the forecast. Check your connection and try again.");
+              const fellBack = await tryLoadCachedForecast();
+              if (fellBack) {
+                setError("Couldn't reach the forecast — showing the last saved one.");
+              } else {
+                setError("Couldn't load the forecast. Check your connection and try again.");
+              }
             } finally {
               setLoadingWeather(false);
             }
@@ -1925,6 +2062,8 @@ function App() {
 
   const homeDaysRaw = useMemo(() => computeDays(weatherHome), [weatherHome]);
   const workDaysRaw = useMemo(() => computeDays(weatherWork), [weatherWork]);
+  const homeYesterday = homeDaysRaw.yesterday || null;
+  const workYesterday = workDaysRaw.yesterday || null;
   const filterOvernight = (days) =>
     prefs.hideOvernight
       ? days.map((d) => ({ ...d, hours: d.hours.filter((h) => h.hourNum >= 5 && h.hourNum < 23) }))
@@ -1932,8 +2071,39 @@ function App() {
   const homeDays = filterOvernight(homeDaysRaw);
   const workDays = filterOvernight(workDaysRaw);
   const hasWork = !!(data && data.locations && data.locations.work);
+
+  const combinedAlerts = useMemo(() => {
+    const rank = { Extreme: 0, Severe: 1, Moderate: 2, Minor: 3, Unknown: 4 };
+    const seen = new Map();
+    (alerts.home || []).forEach((a) => seen.set(a.id, { ...a, where: hasWork ? "home" : null }));
+    (alerts.work || []).forEach((a) => {
+      if (seen.has(a.id)) {
+        seen.get(a.id).where = "home & work";
+      } else {
+        seen.set(a.id, { ...a, where: "work" });
+      }
+    });
+    return Array.from(seen.values()).sort((x, y) => (rank[x.severity] ?? 4) - (rank[y.severity] ?? 4));
+  }, [alerts, hasWork]);
   const homeDay = homeDays[dayIndex] || homeDays[0];
   const workDay = hasWork && workDays[dayIndex] ? workDays[dayIndex] : homeDay;
+
+  // Swipe left/right on the Daily view to move between days.
+  const handleDayTouchStart = (e) => {
+    const t = e.touches[0];
+    touchStartRef.current = { x: t.clientX, y: t.clientY };
+  };
+  const handleDayTouchEnd = (e) => {
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+    if (!start) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    if (dx < 0 && dayIndex < homeDays.length - 1) setDayIndex(dayIndex + 1);
+    else if (dx > 0 && dayIndex > 0) setDayIndex(dayIndex - 1);
+  };
 
   const isWeekend = !!(homeDay && homeDay.isWeekend);
   const isOff = !!(homeDay && daysOff[homeDay.date]);
@@ -1989,6 +2159,21 @@ function App() {
 
   const allWindowHours = [...morningWindowHours, ...eveningWindowHours];
   const gearTempHours = noCommute && homeDay ? homeDay.hours : allWindowHours.length ? allWindowHours : (homeDay ? homeDay.hours : []);
+
+  // "vs yesterday" — only meaningful for today's actual commute, compared against
+  // yesterday's real recorded hours (fetched via past_days=1).
+  let vsYesterdayText = null;
+  if (homeDay && homeDay.isToday && (homeYesterday || workYesterday)) {
+    const todayCompareHours = noCommute ? homeDay.hours : allWindowHours;
+    const yesterdayMorningHrs = homeYesterday ? hoursInWindow(homeYesterday.hours, prefs.morningStart, prefs.morningEnd) : [];
+    const yesterdayEveningHrs = workYesterday ? hoursInWindow(workYesterday.hours, prefs.eveningStart, prefs.eveningEnd) : [];
+    const yesterdayCompareHours = noCommute
+      ? (homeYesterday ? homeYesterday.hours : [])
+      : [...yesterdayMorningHrs, ...yesterdayEveningHrs];
+    const todayStats = windowAvgStats(todayCompareHours);
+    const yesterdayStats = windowAvgStats(yesterdayCompareHours);
+    vsYesterdayText = describeVsYesterday(todayStats, yesterdayStats, metric ? "°C" : "°");
+  }
   const gearTemps = gearTempHours.map((h) => h.temp).filter(isNum);
   const minWindowTemp = gearTemps.length ? Math.min(...gearTemps) : null;
   const maxWindowTemp = gearTemps.length ? Math.max(...gearTemps) : null;
@@ -2007,8 +2192,34 @@ function App() {
       if (v.morning) totalMornings += 1;
       if (v.evening) totalEvenings += 1;
     });
-    return { entries, totalMornings, totalEvenings, totalDays: entries.length };
-  }, [rideLog]);
+
+    // Current streak of consecutive commute weekdays ridden, walking backward from
+    // today. Weekends and days marked off don't break it (they're not commute days),
+    // and today itself doesn't break it if it hasn't happened yet.
+    let currentStreak = 0;
+    if (todayKey) {
+      let cursor = todayKey;
+      for (let i = 0; i < 400; i++) {
+        const dow = new Date(cursor + "T12:00:00Z").getUTCDay();
+        const isWeekendDay = dow === 0 || dow === 6;
+        const isOff = !!daysOff[cursor];
+        const entry = rideLog[cursor];
+        const rode = !!(entry && (entry.morning || entry.evening));
+        if (isWeekendDay || isOff) {
+          // skip — doesn't break or extend the streak
+        } else if (rode) {
+          currentStreak += 1;
+        } else if (cursor === todayKey) {
+          // today's commute may not have happened yet — don't break on it
+        } else {
+          break;
+        }
+        cursor = shiftDateKey(cursor, -1);
+      }
+    }
+
+    return { entries, totalMornings, totalEvenings, totalDays: entries.length, currentStreak };
+  }, [rideLog, daysOff, todayKey]);
 
   const updatedLabel = formatUpdated(lastUpdated);
 
@@ -2178,8 +2389,9 @@ function App() {
               <ChevronLeft className="w-4 h-4" /> Back to forecast
             </button>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid gap-3 log-stats-grid">
               <StatBlock label="Days ridden" value={logStats.totalDays} />
+              <StatBlock label="Streak" value={logStats.currentStreak} />
               <StatBlock label="Mornings" value={logStats.totalMornings} />
               <StatBlock label="Evenings" value={logStats.totalEvenings} />
             </div>
@@ -2205,9 +2417,24 @@ function App() {
         ) : (
           <>
             {error && (
-              <div className="flex items-center gap-2 text-sm text-red-400 bg-red-500/10 border border-red-900 rounded-lg px-3 py-2" role="alert">
+              <div
+                className={
+                  isStale
+                    ? "flex items-center gap-2 text-sm text-amber-300 bg-amber-500/10 border border-amber-900 rounded-lg px-3 py-2"
+                    : "flex items-center gap-2 text-sm text-red-400 bg-red-500/10 border border-red-900 rounded-lg px-3 py-2"
+                }
+                role="alert"
+              >
                 <AlertTriangle className="w-4 h-4 shrink-0" />
                 {error}
+              </div>
+            )}
+
+            {combinedAlerts.length > 0 && (
+              <div className="flex flex-col gap-2">
+                {combinedAlerts.slice(0, 3).map((a) => (
+                  <AlertBanner key={a.id} alert={a} />
+                ))}
               </div>
             )}
 
@@ -2233,7 +2460,12 @@ function App() {
                     <WeekView homeDays={homeDays} workDays={workDays} hasWork={hasWork} prefs={prefs} daysOff={daysOff} rideLog={rideLog} onSelectDay={(i) => { setDayIndex(i); setMainView("daily"); }} />
                   </div>
                 ) : (
-                  <div key={`daily-${homeDay && homeDay.date}`} className="view-panel">
+                  <div
+                    key={`daily-${homeDay && homeDay.date}`}
+                    className="view-panel"
+                    onTouchStart={handleDayTouchStart}
+                    onTouchEnd={handleDayTouchEnd}
+                  >
                     <div className="day-strip">
                       <div
                         className="day-strip-indicator"
@@ -2257,9 +2489,15 @@ function App() {
                     <div className="sun-block">
                       <SunTimes sun={homeDay && homeDay.sun} />
                       {updatedLabel && (
-                        <span className="text-sm text-zinc-600 font-mono">Updated {updatedLabel}</span>
+                        <span className={`text-sm font-mono ${isStale ? "text-amber-500" : "text-zinc-600"}`}>
+                          Updated {updatedLabel}{isStale ? " (cached)" : ""}
+                        </span>
                       )}
                     </div>
+
+                    {vsYesterdayText && (
+                      <div className="text-sm text-zinc-500 -mt-1 px-1">{vsYesterdayText}</div>
+                    )}
 
                     {!isWeekend && homeDay && (
                       <button
