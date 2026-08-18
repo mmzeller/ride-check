@@ -547,6 +547,7 @@ const RotateCcw = (p) => <IconBase className={p.className}><path d="M3 12a9 9 0 
 const AlertTriangle = (p) => <IconBase className={p.className}><path d="M10.3 3.9 2 19h20L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></IconBase>;
 const ChevronLeft = (p) => <IconBase className={p.className}><path d="m15 18-6-6 6-6"/></IconBase>;
 const ChevronDown = (p) => <IconBase className={p.className}><path d="m6 9 6 6 6-6"/></IconBase>;
+const Deer = (p) => <IconBase className={p.className}><circle cx="12" cy="10" r="3"/><path d="M12 13v7M9 20l1.5-3M15 20l-1.5-3"/><path d="M9.5 8 7 4m0 0 1 3M7 4l3 1.5"/><path d="M14.5 8 17 4m0 0-1 3m1-3-3 1.5"/></IconBase>;
 const ListChecks = (p) => <IconBase className={p.className}><path d="m3 6 1.5 1.5L7 5"/><path d="m3 12 1.5 1.5L7 11"/><path d="m3 18 1.5 1.5L7 17"/><path d="M11 6h10M11 12h10M11 18h10"/></IconBase>;
 const Thermometer = (p) => <IconBase className={p.className}><path d="M14 4v10.5a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0z"/><circle cx="12" cy="17" r="1.4" fill="currentColor" stroke="none"/></IconBase>;
 const Moon = (p) => <IconBase className={p.className}><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></IconBase>;
@@ -1006,6 +1007,104 @@ function describeVsYesterday(today, yesterday, tempUnit) {
   return `${parts.join(", ")} than yesterday's commute.`;
 }
 
+// ---- Motorcycle-specific ride advisories ----
+// These are informational heads-ups, separate from the personal comfort
+// thresholds in prefs — they flag conditions that matter specifically because
+// this is a bike, not a car.
+
+/** Near-freezing temps + dark hours is the classic bridge/overpass black-ice trap. */
+function hasBlackIceRisk(hours, sun, metric) {
+  if (!hours || !hours.length) return false;
+  const lo = metric ? -2 : 28;
+  const hi = metric ? 3 : 37;
+  return hours.some((h) => isNum(h.temp) && h.temp >= lo && h.temp <= hi && hourIsDark(h, sun));
+}
+
+/** Roads can stay wet for a while after rain stops, even once the forecast reads "clear." */
+function hasWetRoadRisk(hours) {
+  if (!hours || !hours.length) return false;
+  return hours.some((h) => isNum(h.recentPrecip) && h.recentPrecip >= 0.5 && (!isNum(h.precip) || h.precip < 0.1));
+}
+
+function isDawnDuskWindow(hour, sun) {
+  if (!sun || !sun.sunriseIso || !sun.sunsetIso) return false;
+  const mid = hour.hourNum * 60 + 30;
+  const sr = isoToMinutes(sun.sunriseIso);
+  const ss = isoToMinutes(sun.sunsetIso);
+  if (sr == null || ss == null) return false;
+  return Math.abs(mid - sr) <= 75 || Math.abs(mid - ss) <= 75;
+}
+
+/** Deer activity spikes at dawn/dusk during fall rut season (roughly Sep–Dec). */
+function hasDeerRisk(hours, sun) {
+  if (!hours || !hours.length) return false;
+  return hours.some((h) => {
+    if (!isDawnDuskWindow(h, sun)) return false;
+    const month = parseInt(h.iso.slice(5, 7), 10);
+    return month >= 9 && month <= 12;
+  });
+}
+
+/** Great-circle initial bearing from point 1 to point 2, in degrees (0 = north). */
+function bearingBetween(lat1, lon1, lat2, lon2) {
+  const toRad = (d) => (d * Math.PI) / 180;
+  const toDeg = (r) => (r * 180) / Math.PI;
+  const phi1 = toRad(lat1);
+  const phi2 = toRad(lat2);
+  const dLambda = toRad(lon2 - lon1);
+  const y = Math.sin(dLambda) * Math.cos(phi2);
+  const x = Math.cos(phi1) * Math.sin(phi2) - Math.sin(phi1) * Math.cos(phi2) * Math.cos(dLambda);
+  return (toDeg(Math.atan2(y, x)) + 360) % 360;
+}
+
+/** Headwind slows you down; a crosswind pushes you sideways — the one that actually matters on two wheels. */
+function classifyWindAngle(windDir, bearing) {
+  const diff = Math.abs(((windDir - bearing + 180 + 360) % 360) - 180);
+  if (diff <= 45) return "headwind";
+  if (diff >= 135) return "tailwind";
+  return "crosswind";
+}
+
+function hasCrosswindRisk(hours, bearing, minMph) {
+  if (bearing == null || !hours || !hours.length) return false;
+  return hours.some(
+    (h) => isNum(h.wind) && h.wind >= minMph && isNum(h.windDir) && classifyWindAngle(h.windDir, bearing) === "crosswind"
+  );
+}
+
+function aqiCategory(aqi) {
+  if (!isNum(aqi)) return null;
+  if (aqi <= 100) return null; // Good/Moderate — not worth a heads-up
+  if (aqi <= 150) return { label: "Unhealthy for Sensitive Groups", tone: "warn" };
+  if (aqi <= 200) return { label: "Unhealthy", tone: "high" };
+  if (aqi <= 300) return { label: "Very Unhealthy", tone: "high" };
+  return { label: "Hazardous", tone: "high" };
+}
+
+/** Best-effort fetch of hourly US AQI / PM2.5, rolled up to a daily max per date. Fails quietly. */
+async function fetchAirQuality(lat, lon) {
+  try {
+    const r = await fetch(
+      `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=us_aqi,pm2_5&forecast_days=7&timezone=auto`
+    );
+    if (!r.ok) return {};
+    const j = await r.json();
+    if (!j || !j.hourly || !j.hourly.time) return {};
+    const byDate = {};
+    j.hourly.time.forEach((t, i) => {
+      const dateKey = t.slice(0, 10);
+      const aqi = j.hourly.us_aqi ? j.hourly.us_aqi[i] : null;
+      const pm25 = j.hourly.pm2_5 ? j.hourly.pm2_5[i] : null;
+      if (!byDate[dateKey]) byDate[dateKey] = { maxAqi: null, maxPm25: null };
+      if (isNum(aqi) && (byDate[dateKey].maxAqi == null || aqi > byDate[dateKey].maxAqi)) byDate[dateKey].maxAqi = aqi;
+      if (isNum(pm25) && (byDate[dateKey].maxPm25 == null || pm25 > byDate[dateKey].maxPm25)) byDate[dateKey].maxPm25 = pm25;
+    });
+    return byDate;
+  } catch (e) {
+    return {};
+  }
+}
+
 function alertSeverityClass(severity) {
   if (severity === "Extreme" || severity === "Severe") return "border-red-800 bg-red-500/10 text-red-300";
   if (severity === "Moderate") return "border-amber-800 bg-amber-500/10 text-amber-300";
@@ -1022,6 +1121,33 @@ function AlertBanner({ alert }) {
         {alert.where && <span className="text-zinc-500"> · {alert.where}</span>}
         {alert.headline && <span className="block text-zinc-400 font-normal mt-0.5">{alert.headline}</span>}
       </span>
+    </div>
+  );
+}
+
+function AdvisoryRow({ icon: Icon, title, detail, tone }) {
+  const cls = tone === "high"
+    ? "border-red-800 bg-red-500/10 text-red-300"
+    : "border-amber-800 bg-amber-500/10 text-amber-300";
+  return (
+    <div className={`flex items-start gap-2.5 rounded-lg border px-3 py-2.5 ${cls}`}>
+      <Icon className="w-5 h-5 shrink-0 mt-0.5" />
+      <span className="min-w-0">
+        <span className="text-sm font-semibold block">{title}</span>
+        <span className="text-sm text-zinc-400 block mt-0.5">{detail}</span>
+      </span>
+    </div>
+  );
+}
+
+function AdvisoriesCard({ advisories }) {
+  if (!advisories || !advisories.length) return null;
+  return (
+    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 card-pad">
+      <h3 className="text-sm font-semibold uppercase tracking-widest text-amber-400 mb-3">Ride advisories</h3>
+      <div className="flex flex-col gap-2">
+        {advisories.map((a) => <AdvisoryRow key={a.key} {...a} />)}
+      </div>
     </div>
   );
 }
@@ -1080,6 +1206,18 @@ function computeDays(weather) {
     const hourNum = parseInt(t.slice(11, 13), 10);
     if (!grouped[dateKey]) grouped[dateKey] = [];
     const visM = h.visibility && h.visibility[i] != null ? h.visibility[i] / 1609.34 : null;
+    // Sum of the 3 hours before this one — used to flag roads that may still be
+    // wet even though it isn't raining right now.
+    let recentPrecip = null;
+    if (h.precipitation) {
+      let sum = 0;
+      let any = false;
+      for (let k = 1; k <= 3; k++) {
+        const v = h.precipitation[i - k];
+        if (v != null) { sum += v; any = true; }
+      }
+      recentPrecip = any ? sum : null;
+    }
     grouped[dateKey].push({
       iso: t,
       hourNum,
@@ -1087,8 +1225,10 @@ function computeDays(weather) {
       temp: h.temperature_2m ? h.temperature_2m[i] : null,
       precipProb: h.precipitation_probability ? h.precipitation_probability[i] : null,
       precip: h.precipitation ? h.precipitation[i] : null,
+      recentPrecip,
       wind: h.windspeed_10m ? h.windspeed_10m[i] : null,
       gust: h.windgusts_10m ? h.windgusts_10m[i] : null,
+      windDir: h.winddirection_10m ? h.winddirection_10m[i] : null,
       visibilityMiles: visM,
       weathercode: h.weathercode ? h.weathercode[i] : 0,
       humidity: h.relative_humidity_2m ? h.relative_humidity_2m[i] : null,
@@ -1794,6 +1934,7 @@ function App() {
   const [weatherWork, setWeatherWork] = useState(null);
   const [alerts, setAlerts] = useState({ home: [], work: [] });
   const [alertsCollapsed, setAlertsCollapsed] = useState(true);
+  const [airQuality, setAirQuality] = useState({ home: {}, work: {} });
   const [loadingWeather, setLoadingWeather] = useState(false);
   const [error, setError] = useState(null);
   const [dayIndex, setDayIndex] = useState(0);
@@ -1825,22 +1966,25 @@ function App() {
       const fetchOne = (loc) =>
         fetch(
           `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}` +
-            `&hourly=temperature_2m,precipitation_probability,precipitation,windspeed_10m,windgusts_10m,visibility,weathercode,relative_humidity_2m` +
+            `&hourly=temperature_2m,precipitation_probability,precipitation,windspeed_10m,windgusts_10m,winddirection_10m,visibility,weathercode,relative_humidity_2m` +
             `&daily=sunrise,sunset&temperature_unit=${tempUnit}&windspeed_unit=${windUnit}&timezone=auto&forecast_days=7&past_days=1`
         ).then((r) => {
           if (!r.ok) throw new Error("bad response");
           return r.json();
         });
 
-      const [homeJson, workJson, homeAlerts, workAlerts] = await Promise.all([
+      const [homeJson, workJson, homeAlerts, workAlerts, homeAqi, workAqi] = await Promise.all([
         fetchOne(locations.home),
         locations.work ? fetchOne(locations.work) : Promise.resolve(null),
         fetchAlerts(locations.home.lat, locations.home.lon),
         locations.work ? fetchAlerts(locations.work.lat, locations.work.lon) : Promise.resolve([]),
+        fetchAirQuality(locations.home.lat, locations.home.lon),
+        locations.work ? fetchAirQuality(locations.work.lat, locations.work.lon) : Promise.resolve({}),
       ]);
       setWeatherHome(homeJson);
       setWeatherWork(workJson);
       setAlerts({ home: homeAlerts, work: workAlerts });
+      setAirQuality({ home: homeAqi, work: workAqi });
       setDayIndex(0);
       const now = Date.now();
       setLastUpdated(now);
@@ -1944,21 +2088,24 @@ function App() {
               const fetchOne = (loc) =>
                 fetch(
                   `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}` +
-                    `&hourly=temperature_2m,precipitation_probability,precipitation,windspeed_10m,windgusts_10m,visibility,weathercode,relative_humidity_2m` +
+                    `&hourly=temperature_2m,precipitation_probability,precipitation,windspeed_10m,windgusts_10m,winddirection_10m,visibility,weathercode,relative_humidity_2m` +
                     `&daily=sunrise,sunset&temperature_unit=${tempUnit}&windspeed_unit=${windUnit}&timezone=auto&forecast_days=7&past_days=1`
                 ).then((r) => {
                   if (!r.ok) throw new Error("bad response");
                   return r.json();
                 });
-              const [homeJson, workJson, homeAlerts, workAlerts] = await Promise.all([
+              const [homeJson, workJson, homeAlerts, workAlerts, homeAqi, workAqi] = await Promise.all([
                 fetchOne(normalized.locations.home),
                 normalized.locations.work ? fetchOne(normalized.locations.work) : Promise.resolve(null),
                 fetchAlerts(normalized.locations.home.lat, normalized.locations.home.lon),
                 normalized.locations.work ? fetchAlerts(normalized.locations.work.lat, normalized.locations.work.lon) : Promise.resolve([]),
+                fetchAirQuality(normalized.locations.home.lat, normalized.locations.home.lon),
+                normalized.locations.work ? fetchAirQuality(normalized.locations.work.lat, normalized.locations.work.lon) : Promise.resolve({}),
               ]);
               setWeatherHome(homeJson);
               setWeatherWork(workJson);
               setAlerts({ home: homeAlerts, work: workAlerts });
+              setAirQuality({ home: homeAqi, work: workAqi });
               const now = Date.now();
               setLastUpdated(now);
               setIsStale(false);
@@ -2209,6 +2356,72 @@ function App() {
   const maxWindowTemp = gearTemps.length ? Math.max(...gearTemps) : null;
   const gearFlags = noCommute ? dayFlags : warningFlags;
   const gear = gearSuggestion(minWindowTemp, maxWindowTemp, gearFlags, metric);
+
+  // Motorcycle-specific advisories for the day being viewed. Checked per commute
+  // leg (morning at home, evening at work) so sun times and travel direction line
+  // up correctly; combined into one list for display.
+  const dayAdvisories = (() => {
+    if (!homeDay) return [];
+    const list = [];
+    const morningHrs = noCommute ? homeDay.hours : morningWindowHours;
+    const eveningHrs = noCommute ? [] : eveningWindowHours;
+    const morningSun = homeDay.sun;
+    const eveningSun = workDay ? workDay.sun : homeDay.sun;
+
+    if (hasBlackIceRisk(morningHrs, morningSun, metric) || hasBlackIceRisk(eveningHrs, eveningSun, metric)) {
+      list.push({
+        key: "blackice",
+        icon: Snowflake,
+        tone: "high",
+        title: "Possible black ice",
+        detail: "Near-freezing and dark — bridges and overpasses can ice before the roads do, even with no rain in the forecast.",
+      });
+    }
+    if (hasWetRoadRisk(morningHrs) || hasWetRoadRisk(eveningHrs)) {
+      list.push({
+        key: "wetroads",
+        icon: Droplet,
+        tone: "warn",
+        title: "Roads may still be wet",
+        detail: "Rain fell recently — the forecast may read clear, but the pavement likely hasn't fully dried out yet.",
+      });
+    }
+    if (hasDeerRisk(morningHrs, morningSun) || hasDeerRisk(eveningHrs, eveningSun)) {
+      list.push({
+        key: "deer",
+        icon: Deer,
+        tone: "warn",
+        title: "Deer activity likely",
+        detail: "Dawn/dusk during fall rut season — watch tree lines on rural roads, especially on the commute in low light.",
+      });
+    }
+    if (hasWork && data.locations.home && data.locations.work) {
+      const crosswindMph = metric ? 24 : 15;
+      const homeToWork = bearingBetween(data.locations.home.lat, data.locations.home.lon, data.locations.work.lat, data.locations.work.lon);
+      const workToHome = bearingBetween(data.locations.work.lat, data.locations.work.lon, data.locations.home.lat, data.locations.home.lon);
+      if (hasCrosswindRisk(morningHrs, homeToWork, crosswindMph) || hasCrosswindRisk(eveningHrs, workToHome, crosswindMph)) {
+        list.push({
+          key: "crosswind",
+          icon: Wind,
+          tone: "warn",
+          title: "Crosswind on your route",
+          detail: "Wind is hitting your commute from the side rather than head-on — the kind that pushes you around, not just slows you down.",
+        });
+      }
+    }
+    const aqiEntry = (airQuality.home && airQuality.home[homeDay.date]) || (airQuality.work && workDay && airQuality.work[workDay.date]);
+    const aqi = aqiCategory(aqiEntry && aqiEntry.maxAqi);
+    if (aqi) {
+      list.push({
+        key: "airquality",
+        icon: CloudFog,
+        tone: aqi.tone,
+        title: `Air quality: ${aqi.label}`,
+        detail: `AQI up to ${Math.round(aqiEntry.maxAqi)} today — you're breathing this directly through a visor. Consider a filtered mask on longer rides.`,
+      });
+    }
+    return list;
+  })();
 
   const todayKey = homeDays[0] ? homeDays[0].date : null;
 
@@ -2614,6 +2827,8 @@ function App() {
                         )}
 
                         <GearCard gear={gear} />
+
+                        <AdvisoriesCard advisories={dayAdvisories} />
 
                         {homeDay.isToday && (
                           <div className="rounded-2xl border border-zinc-800 bg-zinc-900 card-pad">
