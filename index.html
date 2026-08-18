@@ -583,7 +583,39 @@ const DEFAULT_PREFS = {
   eveningStart: "17:00",
   eveningEnd: "18:00",
   units: "imperial", // imperial | metric
+  rideMode: "commute", // commute | free | sport | touring
 };
+
+const RIDE_MODE_OPTIONS = [
+  { value: "commute", label: "COMMUTE", short: "Commute" },
+  { value: "free", label: "FREE", short: "Free ride" },
+  { value: "sport", label: "SPORT", short: "Sport" },
+  { value: "touring", label: "TOUR", short: "Touring" },
+];
+
+/** Return prefs with mode-specific threshold tweaks applied. */
+function getModePrefs(prefs) {
+  const mode = prefs.rideMode || "commute";
+  const p = { ...prefs };
+  const metric = p.units === "metric";
+  if (mode === "sport") {
+    // Dry roads + visibility matter more; wind is more tolerable for sport riding
+    p.rainProbThreshold = Math.min(p.rainProbThreshold, 25);
+    p.maxWind = Math.round(p.maxWind * 1.2);
+    p.maxGust = Math.round(p.maxGust * 1.2);
+    // Demand better visibility
+    p.minVisibilityMiles = Math.max(p.minVisibilityMiles, metric ? 3.2 : 2);
+  } else if (mode === "free") {
+    // More forgiving of light rain risk for casual rides
+    p.rainProbThreshold = Math.min(100, p.rainProbThreshold + 15);
+  } else if (mode === "touring") {
+    // Slightly more tolerant of humidity and short dark edges for longer days
+    p.maxHumidity = Math.min(100, p.maxHumidity + 5);
+    // Keep rain threshold as-is; touring cares about sustained comfort
+  }
+  // commute uses the user's raw thresholds (strict)
+  return p;
+}
 
 const WEATHER_CODES = {
   0: ["Clear sky", "clear"], 1: ["Mainly clear", "clear"], 2: ["Partly cloudy", "cloudy"],
@@ -733,6 +765,7 @@ function hourIsDark(hour, sun) {
 }
 
 function evaluateHour(hour, prefs, sun) {
+  // Callers should pass mode-adjusted prefs via getModePrefs() when desired.
   const reasons = [];
   const [, category] = codeInfo(hour.weathercode);
   const metric = prefs.units === "metric";
@@ -821,21 +854,29 @@ function shortReason(r) {
   return r;
 }
 
-function commuteVerdict(hours, prefs, sun) {
+function commuteVerdict(hours, prefs, sun, mode) {
   if (!hours || hours.length === 0) return { status: "unknown", reasons: [], score: null };
-  const evals = hours.map((h) => evaluateHour(h, prefs, sun));
+  const modePrefs = getModePrefs(prefs);
+  const evals = hours.map((h) => evaluateHour(h, modePrefs, sun));
   const goodCount = evals.filter((e) => e.good).length;
   const score = Math.round((goodCount / evals.length) * 100);
   const reasons = [...new Set(evals.flatMap((e) => e.reasons))];
-  // Align with gauge: GO ≥ 90, CAUTION 50–89 shown as soft bad, NO-GO < 50
-  // Commute cards stay binary: GO only if every hour is good (strict safety)
-  const good = evals.every((e) => e.good);
+  // Commute mode: binary GO only if every hour is good (strict safety)
+  // Other modes: GO if score ≥ 80, CAUTION 50–79, otherwise bad
+  const rideMode = mode || prefs.rideMode || "commute";
+  let good;
+  if (rideMode === "commute") {
+    good = evals.every((e) => e.good);
+  } else {
+    good = score >= 80;
+  }
   return { status: good ? "good" : "bad", reasons, score };
 }
 
 function scoreFromHours(hours, prefs, sun) {
   if (!hours || !hours.length) return null;
-  const goodCount = hours.filter((h) => evaluateHour(h, prefs, sun).good).length;
+  const modePrefs = getModePrefs(prefs);
+  const goodCount = hours.filter((h) => evaluateHour(h, modePrefs, sun).good).length;
   return { good: goodCount, total: hours.length };
 }
 
@@ -851,21 +892,22 @@ function computeRideScore(morningHours, eveningHours, prefs, homeSun, workSun) {
 function conditionFlags(hours, prefs, sun) {
   const flags = { temp: false, wind: false, rain: false, fog: false, snow: false, storm: false, humidity: false, ice: false, dark: false };
   if (!hours) return flags;
-  const metric = prefs.units === "metric";
+  const modePrefs = getModePrefs(prefs);
+  const metric = modePrefs.units === "metric";
   hours.forEach((hour) => {
     const [, category] = codeInfo(hour.weathercode);
-    if (isNum(hour.temp) && (hour.temp < prefs.tempMin || hour.temp > prefs.tempMax)) flags.temp = true;
-    if ((isNum(hour.wind) && hour.wind > prefs.maxWind) || (isNum(hour.gust) && hour.gust > prefs.maxGust)) flags.wind = true;
+    if (isNum(hour.temp) && (hour.temp < modePrefs.tempMin || hour.temp > modePrefs.tempMax)) flags.temp = true;
+    if ((isNum(hour.wind) && hour.wind > modePrefs.maxWind) || (isNum(hour.gust) && hour.gust > modePrefs.maxGust)) flags.wind = true;
     if (category === "storm") flags.storm = true;
-    if (prefs.avoidRain && category !== "storm" && (category === "rain" || (isNum(hour.precipProb) && hour.precipProb >= prefs.rainProbThreshold))) flags.rain = true;
-    if (prefs.avoidSnow && category === "snow") flags.snow = true;
+    if (modePrefs.avoidRain && category !== "storm" && (category === "rain" || (isNum(hour.precipProb) && hour.precipProb >= modePrefs.rainProbThreshold))) flags.rain = true;
+    if (modePrefs.avoidSnow && category === "snow") flags.snow = true;
     {
-      const minVisMiles = metric ? prefs.minVisibilityMiles / 1.60934 : prefs.minVisibilityMiles;
-      if (prefs.avoidFog && (category === "fog" || (isNum(hour.visibilityMiles) && hour.visibilityMiles < minVisMiles))) flags.fog = true;
+      const minVisMiles = metric ? modePrefs.minVisibilityMiles / 1.60934 : modePrefs.minVisibilityMiles;
+      if (modePrefs.avoidFog && (category === "fog" || (isNum(hour.visibilityMiles) && hour.visibilityMiles < minVisMiles))) flags.fog = true;
     }
-    if (prefs.avoidHumidity && isNum(hour.temp) && isNum(hour.humidity) && hour.temp >= prefs.humidityTempThreshold && hour.humidity > prefs.maxHumidity) flags.humidity = true;
-    if (prefs.warnIceRisk && isNum(hour.temp) && (metric ? hour.temp <= 1 : hour.temp <= 34)) flags.ice = true;
-    if (prefs.avoidDark && sun && hourIsDark(hour, sun)) flags.dark = true;
+    if (modePrefs.avoidHumidity && isNum(hour.temp) && isNum(hour.humidity) && hour.temp >= modePrefs.humidityTempThreshold && hour.humidity > modePrefs.maxHumidity) flags.humidity = true;
+    if (modePrefs.warnIceRisk && isNum(hour.temp) && (metric ? hour.temp <= 1 : hour.temp <= 34)) flags.ice = true;
+    if (modePrefs.avoidDark && sun && hourIsDark(hour, sun)) flags.dark = true;
   });
   return flags;
 }
@@ -945,13 +987,14 @@ function darknessGradient(sun, hours) {
 
 function findBestWindow(hours, prefs, sun, minLen = 2) {
   if (!hours || hours.length < minLen) return null;
+  const modePrefs = getModePrefs(prefs);
   let best = null;
   let i = 0;
   while (i < hours.length) {
-    const ev = evaluateHour(hours[i], prefs, sun);
+    const ev = evaluateHour(hours[i], modePrefs, sun);
     if (!ev.good) { i += 1; continue; }
     let j = i + 1;
-    while (j < hours.length && evaluateHour(hours[j], prefs, sun).good) j += 1;
+    while (j < hours.length && evaluateHour(hours[j], modePrefs, sun).good) j += 1;
     const len = j - i;
     if (len >= minLen && (!best || len > best.len || (len === best.len && i < best.startIdx))) {
       best = { startIdx: i, endIdx: j - 1, len, start: hours[i], end: hours[j - 1] };
@@ -1725,23 +1768,26 @@ function BestWindowCard({ window }) {
 
 /** Shared per-day summary used by both week rows and the best-day banner. */
 function computeDaySummary(day, workDay, prefs, noCommute) {
+  const rideMode = prefs.rideMode || "commute";
+  const isCommuteMode = rideMode === "commute";
   const morningHrs = hoursInWindow(day.hours, prefs.morningStart, prefs.morningEnd);
   const eveningHrs = hoursInWindow(workDay.hours, prefs.eveningStart, prefs.eveningEnd);
-  const morning = commuteVerdict(morningHrs, prefs, day.sun);
-  const evening = commuteVerdict(eveningHrs, prefs, workDay.sun);
+  const morning = commuteVerdict(morningHrs, prefs, day.sun, rideMode);
+  const evening = commuteVerdict(eveningHrs, prefs, workDay.sun, rideMode);
   const temps = day.hours.map((h) => h.temp).filter(isNum);
   const hi = temps.length ? Math.round(Math.max(...temps)) : null;
   const lo = temps.length ? Math.round(Math.min(...temps)) : null;
   const midHour = day.hours[Math.floor(day.hours.length / 2)];
   const midCategory = midHour ? codeInfo(midHour.weathercode)[1] : "clear";
 
-  let dayScore = noCommute
+  // Non-commute modes always use full-day score; commute mode uses window score when applicable
+  let dayScore = (noCommute || !isCommuteMode)
     ? dayOverallScore(day.hours, prefs, day.sun)
     : computeRideScore(morningHrs, eveningHrs, prefs, day.sun, workDay.sun);
   // If commute windows are empty (e.g. late tonight), fall back to full-day score
   if (dayScore === null) dayScore = dayOverallScore(day.hours, prefs, day.sun);
 
-  const flags = noCommute
+  const flags = (noCommute || !isCommuteMode)
     ? conditionFlags(day.hours, prefs, day.sun)
     : mergeFlags(
         conditionFlags(morningHrs, prefs, day.sun),
@@ -1752,10 +1798,11 @@ function computeDaySummary(day, workDay, prefs, noCommute) {
 }
 
 function BestDayBanner({ homeDays, workDays, hasWork, prefs, daysOff, onSelect }) {
+  const isCommuteMode = (prefs.rideMode || "commute") === "commute";
   let best = null;
   homeDays.forEach((d, i) => {
     const workDay = hasWork && workDays[i] ? workDays[i] : d;
-    const noCommute = d.isWeekend || !!daysOff[d.date];
+    const noCommute = d.isWeekend || !!daysOff[d.date] || !isCommuteMode;
     const { dayScore } = computeDaySummary(d, workDay, prefs, noCommute);
     if (dayScore != null && (!best || dayScore > best.dayScore)) {
       best = { index: i, date: d.date, label: d.isToday ? "Today" : d.dateLabel, dayScore };
@@ -1801,7 +1848,7 @@ function WeekRow({ day, workDay, prefs, onSelect, noCommute, offReason, logged }
       <div className="week-row-mid">
         {noCommute ? (
           <span className="text-sm font-mono px-2 py-1 rounded-md border border-zinc-700 text-zinc-400">
-            {offReason === "off" ? "DAY OFF" : "WEEKEND"}
+            {offReason === "off" ? "DAY OFF" : offReason === "weekend" ? "WEEKEND" : "DAY"}
           </span>
         ) : (
           <>
@@ -1827,6 +1874,7 @@ function WeekRow({ day, workDay, prefs, onSelect, noCommute, offReason, logged }
 }
 
 function WeekView({ homeDays, workDays, hasWork, prefs, daysOff, rideLog, onSelectDay }) {
+  const isCommuteMode = (prefs.rideMode || "commute") === "commute";
   return (
     <div className="week-list">
       <BestDayBanner
@@ -1840,6 +1888,8 @@ function WeekView({ homeDays, workDays, hasWork, prefs, daysOff, rideLog, onSele
       {homeDays.map((d, i) => {
         const isOff = !!daysOff[d.date];
         const log = rideLog[d.date];
+        // In non-commute modes the week rows show day scores instead of AM/PM pills
+        const noCommute = d.isWeekend || isOff || !isCommuteMode;
         return (
           <WeekRow
             key={d.date}
@@ -1847,8 +1897,8 @@ function WeekView({ homeDays, workDays, hasWork, prefs, daysOff, rideLog, onSele
             workDay={hasWork && workDays[i] ? workDays[i] : d}
             prefs={prefs}
             onSelect={() => onSelectDay(i)}
-            noCommute={d.isWeekend || isOff}
-            offReason={isOff ? "off" : "weekend"}
+            noCommute={noCommute}
+            offReason={isOff ? "off" : d.isWeekend ? "weekend" : "mode"}
             logged={!!(log && (log.morning || log.evening))}
           />
         );
@@ -2226,8 +2276,22 @@ function App() {
     loadWeather({ ...data.locations, _unitsMetric: data.prefs.units === "metric" });
   };
 
+  const setRideMode = async (mode) => {
+    if (!data) return;
+    const newPrefs = { ...data.prefs, rideMode: mode };
+    const newData = { ...data, prefs: newPrefs };
+    setData(newData);
+    try {
+      await storage.set(STORAGE_KEY, JSON.stringify(newData));
+    } catch (e) {
+      // best effort
+    }
+  };
+
   const prefs = data ? data.prefs : DEFAULT_PREFS;
   const metric = prefs.units === "metric";
+  const rideMode = prefs.rideMode || "commute";
+  const isCommuteMode = rideMode === "commute";
 
   const homeDaysRaw = useMemo(() => computeDays(weatherHome), [weatherHome]);
   const workDaysRaw = useMemo(() => computeDays(weatherWork), [weatherWork]);
@@ -2284,31 +2348,33 @@ function App() {
 
   const isWeekend = !!(homeDay && homeDay.isWeekend);
   const isOff = !!(homeDay && daysOff[homeDay.date]);
-  const noCommute = isWeekend || isOff;
+  // In non-commute modes we still show the day as a free-ride style decision even on weekdays
+  const noCommute = isWeekend || isOff || !isCommuteMode;
 
   const morningWindowHours = homeDay ? hoursInWindow(homeDay.hours, prefs.morningStart, prefs.morningEnd) : [];
   const eveningWindowHours = workDay ? hoursInWindow(workDay.hours, prefs.eveningStart, prefs.eveningEnd) : [];
 
-  const morningVerdict = commuteVerdict(morningWindowHours, prefs, homeDay && homeDay.sun);
-  const eveningVerdict = commuteVerdict(eveningWindowHours, prefs, workDay && workDay.sun);
+  const morningVerdict = commuteVerdict(morningWindowHours, prefs, homeDay && homeDay.sun, rideMode);
+  const eveningVerdict = commuteVerdict(eveningWindowHours, prefs, workDay && workDay.sun, rideMode);
 
   // Free ride: next stretch of hours (up to 4) or best consecutive good window today
   const freeRideHours = homeDay ? pickFreeRideHours(homeDay) : [];
-  const freeRideVerdict = commuteVerdict(freeRideHours, prefs, homeDay && homeDay.sun);
+  const freeRideVerdict = commuteVerdict(freeRideHours, prefs, homeDay && homeDay.sun, rideMode);
   const freeRideWindowLabel = homeDay && homeDay.isToday
     ? "Next few hours"
     : (freeRideHours.length
         ? `${freeRideHours[0].hourLabel} – ${freeRideHours[freeRideHours.length - 1].hourLabel}`
         : "—");
   const bestWindow = homeDay ? findBestWindow(homeDay.hours, prefs, homeDay.sun, 2) : null;
-  // Day-level score for weekends (shown only when no commute)
+  // Day-level score (primary for free / sport / touring modes and weekends)
   const freeDayScore = homeDay ? dayOverallScore(homeDay.hours, prefs, homeDay.sun) : null;
 
-  const activeDay = !noCommute && hourlyLoc === "work" && hasWork && workDays[dayIndex] ? workDays[dayIndex] : homeDay;
+  const activeDay = isCommuteMode && !noCommute && hourlyLoc === "work" && hasWork && workDays[dayIndex] ? workDays[dayIndex] : homeDay;
 
   const hourEvals = useMemo(() => {
     if (!activeDay) return [];
-    return activeDay.hours.map((h) => ({ hour: h, ev: evaluateHour(h, prefs, activeDay.sun) }));
+    const modePrefs = getModePrefs(prefs);
+    return activeDay.hours.map((h) => ({ hour: h, ev: evaluateHour(h, modePrefs, activeDay.sun) }));
   }, [activeDay, prefs]);
 
   const tempsForChart = hourEvals.map((x) => x.hour.temp).filter(isNum);
@@ -2325,13 +2391,14 @@ function App() {
   const inMorningWindow = (h) => hoursInWindow([h], prefs.morningStart, prefs.morningEnd).length > 0;
   const inEveningWindow = (h) => hoursInWindow([h], prefs.eveningStart, prefs.eveningEnd).length > 0;
 
-  // Score only remaining (non-empty) commute legs
-  const rideScore = computeRideScore(morningWindowHours, eveningWindowHours, prefs, homeDay && homeDay.sun, workDay && workDay.sun);
+  // Commute mode uses strict window score; other modes use full-day score
+  const commuteRideScore = computeRideScore(morningWindowHours, eveningWindowHours, prefs, homeDay && homeDay.sun, workDay && workDay.sun);
+  const rideScore = isCommuteMode && !noCommute ? commuteRideScore : freeDayScore;
   const warningFlags = mergeFlags(
     conditionFlags(morningWindowHours, prefs, homeDay && homeDay.sun),
     conditionFlags(eveningWindowHours, prefs, workDay && workDay.sun)
   );
-  // Full-day flags for weekends / days off (no commute windows)
+  // Full-day flags for free/sport/touring modes and weekends / days off
   const dayFlags = conditionFlags(homeDay ? homeDay.hours : [], prefs, homeDay && homeDay.sun);
 
   const allWindowHours = [...morningWindowHours, ...eveningWindowHours];
@@ -2525,6 +2592,21 @@ function App() {
               <LocationPicker value={formLocations.work} onChange={(loc) => setFormLocations((p) => ({ ...p, work: loc }))} />
             </SectionCard>
 
+            <SectionCard title="Ride mode">
+              <p className="text-sm text-zinc-500 mb-2">Changes how the day is scored and which cards are emphasized. You can also switch modes from the main forecast view.</p>
+              <SegmentedTabs
+                value={formPrefs.rideMode || "commute"}
+                onChange={(v) => setFormPrefs((p) => ({ ...p, rideMode: v }))}
+                options={RIDE_MODE_OPTIONS}
+              />
+              <div className="mt-2 text-sm text-zinc-500 space-y-1">
+                <p><span className="text-zinc-300 font-medium">Commute</span> — strict GO only if every hour in your windows is good.</p>
+                <p><span className="text-zinc-300 font-medium">Free ride</span> — more forgiving of light rain risk; focuses on the day and best window.</p>
+                <p><span className="text-zinc-300 font-medium">Sport</span> — prioritizes dry roads and visibility; tolerates a bit more wind.</p>
+                <p><span className="text-zinc-300 font-medium">Touring</span> — balanced for longer days and sustained comfort.</p>
+              </div>
+            </SectionCard>
+
             <SectionCard title="Units">
               <SegmentedTabs
                 value={formPrefs.units === "metric" ? "metric" : "imperial"}
@@ -2715,6 +2797,13 @@ function App() {
                   ]}
                 />
 
+                <SegmentedTabs
+                  value={rideMode}
+                  onChange={setRideMode}
+                  options={RIDE_MODE_OPTIONS}
+                  className="mt-0"
+                />
+
                 {mainView === "week" ? (
                   <div key="week" className="view-panel">
                     <WeekView homeDays={homeDays} workDays={workDays} hasWork={hasWork} prefs={prefs} daysOff={daysOff} rideLog={rideLog} onSelectDay={(i) => { setDayIndex(i); setMainView("daily"); }} />
@@ -2759,7 +2848,7 @@ function App() {
                       <div className="text-sm text-zinc-500 -mt-1 px-1">{vsYesterdayText}</div>
                     )}
 
-                    {!isWeekend && homeDay && (
+                    {isCommuteMode && !isWeekend && homeDay && (
                       <button
                         type="button"
                         onClick={() => toggleDayOff(homeDay.date)}
@@ -2776,21 +2865,26 @@ function App() {
                       </div>
                     ) : (
                       <>
-                        {!noCommute && <RideGaugeCard score={rideScore} flags={warningFlags} />}
-
-                        {noCommute && (
+                        {isCommuteMode && !noCommute ? (
+                          <RideGaugeCard score={rideScore} flags={warningFlags} />
+                        ) : (
                           <div className="carbon-texture rounded-2xl border border-zinc-800 ride-score-card shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
                             <div className="text-center text-sm text-zinc-500 mb-2">
-                              {isWeekend ? "Weekend" : "Day off"} — no fixed commute
+                              {isCommuteMode
+                                ? (isWeekend ? "Weekend" : "Day off") + " — no fixed commute"
+                                : (RIDE_MODE_OPTIONS.find((m) => m.value === rideMode)?.short || "Ride") + " mode"}
                             </div>
                             <div className="flex items-center justify-center gap-2 ride-score-title">
-                              <h3 className="text-sm font-semibold uppercase tracking-widest text-amber-400">Day score</h3>
-                              <ScoreChip score={freeDayScore} />
+                              <MotoSilhouette className="w-10 h-5 text-amber-500/50 shrink-0" />
+                              <h3 className="text-sm font-semibold uppercase tracking-widest text-amber-400">
+                                {isCommuteMode ? "Day score" : "Ride score"}
+                              </h3>
                             </div>
+                            <RideGauge score={rideScore} />
                             <div className={`text-center font-mono font-bold tracking-widest text-base ride-score-label ${
-                              freeDayScore == null ? "text-zinc-600" : freeDayScore >= 90 ? "text-emerald-400" : freeDayScore >= 50 ? "text-amber-400" : "text-red-400"
+                              rideScore == null ? "text-zinc-600" : rideScore >= 90 ? "text-emerald-400" : rideScore >= 50 ? "text-amber-400" : "text-red-400"
                             }`}>
-                              {freeDayScore == null ? "NO DATA" : freeDayScore >= 90 ? "GO" : freeDayScore >= 50 ? "CAUTION" : "NO-GO"}
+                              {rideScore == null ? "NO DATA" : rideScore >= 90 ? "GO" : rideScore >= 50 ? "CAUTION" : "NO-GO"}
                             </div>
                             <WarningLights flags={dayFlags} />
                           </div>
@@ -2800,16 +2894,18 @@ function App() {
                           <BestWindowCard window={bestWindow} />
                         )}
 
+                        {/* Free-ride style card always useful; in non-commute modes it is the primary decision aid */}
                         {freeRideHours.length > 0 && (
                           <CommuteCard
-                            label="Free ride"
+                            label={isCommuteMode ? "Free ride" : (RIDE_MODE_OPTIONS.find((m) => m.value === rideMode)?.short || "Ride") + " window"}
                             sublabel={data.locations.home ? `At ${data.locations.home.name}` : null}
                             windowLabel={freeRideWindowLabel}
                             verdict={freeRideVerdict}
                           />
                         )}
 
-                        {!noCommute && (
+                        {/* Strict AM/PM only in true commute mode on a work day */}
+                        {isCommuteMode && !noCommute && (
                           <div className="space-y-3">
                             <CommuteCard
                               label="Morning commute"
