@@ -564,17 +564,91 @@ const STORAGE_KEY_CACHE = "ride-check-forecast-cache";
 const STORAGE_KEY_CHECKLIST = "ride-check-checklist";
 const REFRESH_MS = 30 * 60 * 1000;
 
-const DEFAULT_CHECKLIST = [
-  { id: "tires", label: "Tire pressure & condition" },
-  { id: "chain", label: "Chain tension & lube" },
-  { id: "lights", label: "Lights & signals" },
-  { id: "brakes", label: "Brake feel / fluid" },
-  { id: "mirrors", label: "Mirrors adjusted" },
-  { id: "fuel", label: "Fuel level" },
-  { id: "raingear", label: "Rain gear packed" },
-  { id: "phone", label: "Phone / mount secured" },
-  { id: "helmet", label: "Helmet & gloves ready" },
+/** MSF T-CLOCS pre-ride inspection checklist — grouped for collapsible UI.
+ *  Based on the Motorcycle Safety Foundation T-CLOCS Pre-Ride Inspection Checklist.
+ *  Items are the practical checks most riders can do quickly before a ride. */
+const TCLOCS_SECTIONS = [
+  {
+    id: "tires",
+    letter: "T",
+    title: "Tires & Wheels",
+    items: [
+      { id: "t-tire-cond", label: "Tire condition", hint: "Tread depth, wear, weathering, bulges, embedded objects" },
+      { id: "t-tire-press", label: "Tire pressure", hint: "Check when cold, adjust to load" },
+      { id: "t-wheels", label: "Wheels & rims", hint: "Cracks, dents, true; spokes tight (ring, not thud)" },
+      { id: "t-bearings", label: "Wheel bearings & seals", hint: "No freeplay or growl; seals intact" },
+      { id: "t-brakes", label: "Brakes", hint: "Each brake holds the bike; pads & discs not worn out" },
+    ],
+  },
+  {
+    id: "controls",
+    letter: "C",
+    title: "Controls",
+    items: [
+      { id: "c-bars", label: "Handlebars & grips", hint: "Straight, turn freely, grips & bar ends secure" },
+      { id: "c-levers", label: "Levers & pedal", hint: "Not bent/cracked; proper adjustment; pivots lubed" },
+      { id: "c-cables", label: "Cables & hoses", hint: "No fraying, kinks, leaks, or sharp routing" },
+      { id: "c-throttle", label: "Throttle", hint: "Moves freely, snaps closed; no rev when turning bars" },
+    ],
+  },
+  {
+    id: "lights",
+    letter: "L",
+    title: "Lights & Electrics",
+    items: [
+      { id: "l-battery", label: "Battery", hint: "Terminals clean & tight; held down securely" },
+      { id: "l-headlamp", label: "Headlamp", hint: "Works, aimed correctly" },
+      { id: "l-tail", label: "Tail / brake lamp", hint: "Lights on brake application" },
+      { id: "l-signals", label: "Turn signals & switches", hint: "Flash correctly; kill, hi/lo, signals all work" },
+      { id: "l-mirrors", label: "Mirrors", hint: "Clean, tight, aimed while seated" },
+      { id: "l-wiring", label: "Wiring & lenses", hint: "No fraying/chafing; lenses intact, no heavy condensation" },
+    ],
+  },
+  {
+    id: "oil",
+    letter: "O",
+    title: "Oil & Other Fluids",
+    items: [
+      { id: "o-engine", label: "Engine oil level", hint: "Warm, level ground; dipstick or sight glass" },
+      { id: "o-other", label: "Gear / hydraulic / coolant", hint: "Transmission, brakes/clutch, coolant when cool" },
+      { id: "o-fuel", label: "Fuel level", hint: "Tank or gauge — enough for the ride" },
+      { id: "o-leaks", label: "No fresh leaks", hint: "Oil, fuel, coolant, brake fluid under the bike" },
+    ],
+  },
+  {
+    id: "chassis",
+    letter: "C",
+    title: "Chassis",
+    items: [
+      { id: "ch-frame", label: "Frame & bearings", hint: "No cracks; steering-head & swingarm play free" },
+      { id: "ch-susp", label: "Suspension", hint: "Forks & shocks travel smoothly; preload/damping set" },
+      { id: "ch-chain", label: "Chain or belt", hint: "Tension at tightest point; lube chain (not belt); sprockets OK" },
+      { id: "ch-fasteners", label: "Fasteners", hint: "Critical bolts/nuts tight; clips & cotters in place" },
+    ],
+  },
+  {
+    id: "stands",
+    letter: "S",
+    title: "Stands",
+    items: [
+      { id: "s-side", label: "Side stand", hint: "Not bent/cracked; spring holds it up; cut-out works if equipped" },
+      { id: "s-center", label: "Center stand", hint: "If equipped: solid, springs hold position" },
+    ],
+  },
+  {
+    id: "personal",
+    letter: "•",
+    title: "Personal / gear",
+    items: [
+      { id: "p-helmet", label: "Helmet & gloves ready" },
+      { id: "p-raingear", label: "Rain gear packed (if needed)" },
+      { id: "p-phone", label: "Phone / mount secured" },
+    ],
+  },
 ];
+
+const ALL_CHECKLIST_ITEMS = TCLOCS_SECTIONS.flatMap((s) => s.items);
+const DEFAULT_CHECKLIST = ALL_CHECKLIST_ITEMS; // backward-compatible alias for init loops
 
 const DEFAULT_PREFS = {
   tempMin: 45,
@@ -2159,10 +2233,16 @@ function App() {
   const [showChecklist, setShowChecklist] = useState(false);
   const [checklist, setChecklist] = useState(() => {
     const init = {};
-    DEFAULT_CHECKLIST.forEach((item) => { init[item.id] = false; });
+    ALL_CHECKLIST_ITEMS.forEach((item) => { init[item.id] = false; });
     return init;
   });
   const [checklistCheckedAt, setChecklistCheckedAt] = useState(null);
+  // Which T-CLOCS sections are expanded (default: first section open)
+  const [checklistOpen, setChecklistOpen] = useState(() => {
+    const open = {};
+    TCLOCS_SECTIONS.forEach((s, i) => { open[s.id] = i === 0; });
+    return open;
+  });
   const [weatherHome, setWeatherHome] = useState(null);
   const [weatherWork, setWeatherWork] = useState(null);
   const [alerts, setAlerts] = useState({ home: [], work: [] });
@@ -2393,7 +2473,7 @@ function App() {
           const parsed = JSON.parse(clRes.value);
           if (parsed && parsed.items) {
             const next = {};
-            DEFAULT_CHECKLIST.forEach((item) => { next[item.id] = !!parsed.items[item.id]; });
+            ALL_CHECKLIST_ITEMS.forEach((item) => { next[item.id] = !!parsed.items[item.id]; });
             setChecklist(next);
             setChecklistCheckedAt(parsed.checkedAt || null);
           }
@@ -2447,11 +2527,21 @@ function App() {
 
   const resetChecklist = () => {
     const next = {};
-    DEFAULT_CHECKLIST.forEach((item) => { next[item.id] = false; });
+    ALL_CHECKLIST_ITEMS.forEach((item) => { next[item.id] = false; });
     setChecklist(next);
     setChecklistCheckedAt(null);
     persistChecklist(next, null);
   };
+
+  const toggleChecklistSection = (sectionId) => {
+    setChecklistOpen((prev) => ({ ...prev, [sectionId]: !prev[sectionId] }));
+  };
+
+  const checklistProgress = useMemo(() => {
+    const total = ALL_CHECKLIST_ITEMS.length;
+    const done = ALL_CHECKLIST_ITEMS.filter((item) => checklist[item.id]).length;
+    return { done, total };
+  }, [checklist]);
 
   const openEdit = () => {
     if (data) {
@@ -2976,45 +3066,102 @@ function App() {
               <ChevronLeft className="w-4 h-4" /> Back to forecast
             </button>
 
-            <SectionCard title="Pre-ride checklist">
-              <p className="text-sm text-zinc-500">Quick safety scan before you roll — does not affect the ride score.</p>
-              <div className="space-y-1">
-                {DEFAULT_CHECKLIST.map((item) => {
-                  const checked = !!checklist[item.id];
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900 card-pad">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <h3 className="text-sm font-semibold uppercase tracking-widest text-amber-400">T-CLOCS checklist</h3>
+                <span className="text-sm font-mono text-zinc-500 tabular-nums">
+                  {checklistProgress.done}/{checklistProgress.total}
+                </span>
+              </div>
+              <p className="text-sm text-zinc-500 mb-3">
+                MSF pre-ride inspection — tap a section to expand. Does not affect the ride score.
+              </p>
+
+              {/* Progress bar */}
+              <div className="h-1.5 rounded-full bg-zinc-800 mb-4 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-amber-500 transition-all"
+                  style={{ width: `${checklistProgress.total ? (checklistProgress.done / checklistProgress.total) * 100 : 0}%` }}
+                />
+              </div>
+
+              <div className="space-y-2">
+                {TCLOCS_SECTIONS.map((section) => {
+                  const open = !!checklistOpen[section.id];
+                  const sectionDone = section.items.filter((it) => checklist[it.id]).length;
+                  const sectionTotal = section.items.length;
+                  const allDone = sectionDone === sectionTotal;
                   return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => toggleChecklistItem(item.id)}
-                      className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left border transition-colors ${
-                        checked
-                          ? "bg-emerald-500/10 border-emerald-800 text-emerald-300"
-                          : "bg-zinc-800/60 border-zinc-800 text-zinc-300 hover:border-zinc-700"
-                      }`}
-                    >
-                      <span className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 ${
-                        checked ? "bg-emerald-500 border-emerald-500 text-zinc-950" : "border-zinc-600"
-                      }`}>
-                        {checked && <CheckCircle2 className="w-3.5 h-3.5" />}
-                      </span>
-                      <span className={`text-sm ${checked ? "line-through opacity-80" : ""}`}>{item.label}</span>
-                    </button>
+                    <div key={section.id} className="rounded-xl border border-zinc-800 overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => toggleChecklistSection(section.id)}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 text-left bg-zinc-800/50 hover:bg-zinc-800 transition-colors"
+                        aria-expanded={open}
+                      >
+                        <span className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 font-mono font-bold text-sm ${
+                          allDone ? "bg-emerald-500/20 text-emerald-400 border border-emerald-700" : "bg-zinc-900 text-amber-400 border border-zinc-700"
+                        }`}>
+                          {section.letter}
+                        </span>
+                        <span className="flex-1 min-w-0">
+                          <span className="block text-sm font-semibold text-zinc-200">{section.title}</span>
+                          <span className="block text-sm text-zinc-500 font-mono">{sectionDone}/{sectionTotal}</span>
+                        </span>
+                        <ChevronDown className={`w-4 h-4 text-zinc-500 shrink-0 transition-transform ${open ? "chevron-flip" : ""}`} />
+                      </button>
+                      {open && (
+                        <div className="border-t border-zinc-800 bg-zinc-900/80 px-2 py-2 space-y-1">
+                          {section.items.map((item) => {
+                            const checked = !!checklist[item.id];
+                            return (
+                              <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => toggleChecklistItem(item.id)}
+                                className={`w-full flex items-start gap-3 rounded-lg px-2.5 py-2 text-left transition-colors ${
+                                  checked ? "bg-emerald-500/10" : "hover:bg-zinc-800/60"
+                                }`}
+                              >
+                                <span className={`mt-0.5 w-5 h-5 rounded-md border flex items-center justify-center shrink-0 ${
+                                  checked ? "bg-emerald-500 border-emerald-500 text-zinc-950" : "border-zinc-600"
+                                }`}>
+                                  {checked && <CheckCircle2 className="w-3.5 h-3.5" />}
+                                </span>
+                                <span className="min-w-0">
+                                  <span className={`block text-sm ${checked ? "text-emerald-300 line-through opacity-80" : "text-zinc-200"}`}>
+                                    {item.label}
+                                  </span>
+                                  {item.hint && (
+                                    <span className="block text-sm text-zinc-500 mt-0.5 leading-snug">{item.hint}</span>
+                                  )}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>
-              <div className="flex items-center justify-between mt-3 pt-2">
+
+              <div className="flex items-center justify-between mt-4 pt-3 border-t border-zinc-800">
                 {checklistCheckedAt ? (
                   <span className="text-sm text-zinc-600 font-mono">
-                    Last updated {formatUpdated(checklistCheckedAt)}
+                    Updated {formatUpdated(checklistCheckedAt)}
                   </span>
                 ) : (
                   <span className="text-sm text-zinc-600">Not checked yet</span>
                 )}
                 <button type="button" onClick={resetChecklist} className="text-sm text-zinc-500 hover:text-zinc-300 flex items-center gap-1">
-                  <RotateCcw className="w-3.5 h-3.5" /> Reset
+                  <RotateCcw className="w-3.5 h-3.5" /> Reset all
                 </button>
               </div>
-            </SectionCard>
+              <p className="text-sm text-zinc-600 mt-3 leading-snug">
+                Based on the MSF T-CLOCS Pre-Ride Inspection Checklist. Expand each letter for what to look for.
+              </p>
+            </div>
           </div>
         ) : showLog ? (
           <div className="main-stack">
