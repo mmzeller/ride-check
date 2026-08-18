@@ -549,6 +549,7 @@ const ChevronLeft = (p) => <IconBase className={p.className}><path d="m15 18-6-6
 const ChevronDown = (p) => <IconBase className={p.className}><path d="m6 9 6 6 6-6"/></IconBase>;
 const Deer = (p) => <IconBase className={p.className}><circle cx="12" cy="10" r="3"/><path d="M12 13v7M9 20l1.5-3M15 20l-1.5-3"/><path d="M9.5 8 7 4m0 0 1 3M7 4l3 1.5"/><path d="M14.5 8 17 4m0 0-1 3m1-3-3 1.5"/></IconBase>;
 const ListChecks = (p) => <IconBase className={p.className}><path d="m3 6 1.5 1.5L7 5"/><path d="m3 12 1.5 1.5L7 11"/><path d="m3 18 1.5 1.5L7 17"/><path d="M11 6h10M11 12h10M11 18h10"/></IconBase>;
+const ClipboardList = (p) => <IconBase className={p.className}><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h6M9 8h.01"/></IconBase>;
 const Thermometer = (p) => <IconBase className={p.className}><path d="M14 4v10.5a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0z"/><circle cx="12" cy="17" r="1.4" fill="currentColor" stroke="none"/></IconBase>;
 const Moon = (p) => <IconBase className={p.className}><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></IconBase>;
 const Snowflake = (p) => <IconBase className={p.className}><path d="M12 2v20M4.2 7l15.6 10M4.2 17l15.6-10"/></IconBase>;
@@ -560,7 +561,20 @@ const STORAGE_KEY_LOG = "ride-check-log";
 const STORAGE_KEY_DAYSOFF = "ride-check-days-off";
 const STORAGE_KEY_ALERTS_COLLAPSED = "ride-check-alerts-collapsed";
 const STORAGE_KEY_CACHE = "ride-check-forecast-cache";
+const STORAGE_KEY_CHECKLIST = "ride-check-checklist";
 const REFRESH_MS = 30 * 60 * 1000;
+
+const DEFAULT_CHECKLIST = [
+  { id: "tires", label: "Tire pressure & condition" },
+  { id: "chain", label: "Chain tension & lube" },
+  { id: "lights", label: "Lights & signals" },
+  { id: "brakes", label: "Brake feel / fluid" },
+  { id: "mirrors", label: "Mirrors adjusted" },
+  { id: "fuel", label: "Fuel level" },
+  { id: "raingear", label: "Rain gear packed" },
+  { id: "phone", label: "Phone / mount secured" },
+  { id: "helmet", label: "Helmet & gloves ready" },
+];
 
 const DEFAULT_PREFS = {
   tempMin: 45,
@@ -918,35 +932,106 @@ function mergeFlags(a, b) {
   return out;
 }
 
-function gearSuggestion(temp, maxTemp, flags, metric) {
+/** NWS wind-chill (°C). Valid for T ≤ 10°C and V ≥ 4.8 km/h; otherwise returns null. */
+function windChillC(tempC, windKmh) {
+  if (!isNum(tempC) || !isNum(windKmh) || tempC > 10 || windKmh < 4.8) return null;
+  return 13.12 + 0.6215 * tempC - 11.37 * Math.pow(windKmh, 0.16) + 0.3965 * tempC * Math.pow(windKmh, 0.16);
+}
+
+/**
+ * "Feels like on a bike" — assumes a cruising speed and adds headwind component.
+ * Returns value in the same units as the input temp (metric → °C, imperial → °F).
+ * rideSpeed is in the same units as wind (km/h or mph).
+ */
+function bikeFeelsLike(temp, wind, windDir, bearing, metric, rideSpeed) {
+  if (!isNum(temp)) return null;
+  const speed = isNum(rideSpeed) ? rideSpeed : (metric ? 70 : 45); // ~45 mph / 70 km/h default cruise
+  let effective = speed;
+  if (isNum(wind) && isNum(windDir) && bearing != null) {
+    const angle = classifyWindAngle(windDir, bearing);
+    if (angle === "headwind") effective = speed + wind;
+    else if (angle === "tailwind") effective = Math.max(speed * 0.35, speed - wind * 0.6);
+    else effective = speed + wind * 0.55; // crosswind still adds cooling
+  } else if (isNum(wind)) {
+    effective = speed + wind * 0.5;
+  }
+  // Convert to metric for the formula
+  const tempC = metric ? temp : ((temp - 32) * 5) / 9;
+  const windKmh = metric ? effective : effective * 1.60934;
+  const chillC = windChillC(tempC, windKmh);
+  if (chillC == null) {
+    // Mild conditions: simple linear cooling estimate
+    const delta = metric ? effective * 0.04 : effective * 0.07;
+    return Math.round(temp - delta);
+  }
+  return metric ? Math.round(chillC) : Math.round((chillC * 9) / 5 + 32);
+}
+
+function rainTrajectory(hours) {
+  if (!hours || hours.length < 2) return null;
+  const probs = hours.map((h) => (isNum(h.precipProb) ? h.precipProb : 0));
+  const first = probs.slice(0, Math.ceil(probs.length / 3));
+  const last = probs.slice(-Math.ceil(probs.length / 3));
+  const avg = (arr) => arr.reduce((a, b) => a + b, 0) / (arr.length || 1);
+  const a0 = avg(first);
+  const a1 = avg(last);
+  if (a1 - a0 >= 15) return "rising";
+  if (a0 - a1 >= 15) return "falling";
+  return "steady";
+}
+
+function gearSuggestion(temp, maxTemp, flags, metric, opts = {}) {
   if (!isNum(temp)) return null;
   let jacket, gloves;
   const extra = [];
-  // Thresholds in display units already stored in prefs space (user units)
+  const feels = isNum(opts.feelsLike) ? opts.feelsLike : null;
+  // Use the colder of ambient vs feels-like for layering decisions when available
+  const effectiveTemp = feels != null && feels < temp ? feels : temp;
+
   if (metric) {
-    if (temp < 0) { jacket = "Insulated/heated suit"; gloves = "Insulated winter gloves"; extra.push("Balaclava or neck gaiter"); }
-    else if (temp < 7) { jacket = "Insulated jacket + thermal liner"; gloves = "Winter gloves"; extra.push("Neck gaiter"); }
-    else if (temp < 16) { jacket = "Mid-weight jacket + liner"; gloves = "Mid-weight gloves"; }
-    else if (temp < 24) { jacket = "Standard armored jacket"; gloves = "Standard gloves"; }
-    else if (temp < 29) { jacket = "Vented/mesh jacket"; gloves = "Lightweight gloves"; }
+    if (effectiveTemp < 0) { jacket = "Insulated/heated suit"; gloves = "Insulated winter gloves"; extra.push("Balaclava or neck gaiter"); }
+    else if (effectiveTemp < 7) { jacket = "Insulated jacket + thermal liner"; gloves = "Winter gloves"; extra.push("Neck gaiter"); }
+    else if (effectiveTemp < 16) { jacket = "Mid-weight jacket + liner"; gloves = "Mid-weight gloves"; }
+    else if (effectiveTemp < 24) { jacket = "Standard armored jacket"; gloves = "Standard gloves"; }
+    else if (effectiveTemp < 29) { jacket = "Vented/mesh jacket"; gloves = "Lightweight gloves"; }
     else { jacket = "Mesh jacket, minimal layers"; gloves = "Vented gloves"; extra.push("Bring water"); }
   } else {
-    if (temp < 32) { jacket = "Insulated/heated suit"; gloves = "Insulated winter gloves"; extra.push("Balaclava or neck gaiter"); }
-    else if (temp < 45) { jacket = "Insulated jacket + thermal liner"; gloves = "Winter gloves"; extra.push("Neck gaiter"); }
-    else if (temp < 60) { jacket = "Mid-weight jacket + liner"; gloves = "Mid-weight gloves"; }
-    else if (temp < 75) { jacket = "Standard armored jacket"; gloves = "Standard gloves"; }
-    else if (temp < 85) { jacket = "Vented/mesh jacket"; gloves = "Lightweight gloves"; }
+    if (effectiveTemp < 32) { jacket = "Insulated/heated suit"; gloves = "Insulated winter gloves"; extra.push("Balaclava or neck gaiter"); }
+    else if (effectiveTemp < 45) { jacket = "Insulated jacket + thermal liner"; gloves = "Winter gloves"; extra.push("Neck gaiter"); }
+    else if (effectiveTemp < 60) { jacket = "Mid-weight jacket + liner"; gloves = "Mid-weight gloves"; }
+    else if (effectiveTemp < 75) { jacket = "Standard armored jacket"; gloves = "Standard gloves"; }
+    else if (effectiveTemp < 85) { jacket = "Vented/mesh jacket"; gloves = "Lightweight gloves"; }
     else { jacket = "Mesh jacket, minimal layers"; gloves = "Vented gloves"; extra.push("Bring water"); }
   }
   if (flags.rain) extra.push("Rain gear");
   if (flags.wind) extra.push("Wind-resistant layer");
   if (flags.ice) extra.push("Extra traction awareness");
+
   const unit = metric ? "°C" : "°F";
   const range =
     isNum(maxTemp) && Math.round(maxTemp) !== Math.round(temp)
       ? `${Math.round(temp)}–${Math.round(maxTemp)}${unit}`
       : `${Math.round(temp)}${unit}`;
-  return { jacket, gloves, extra, tempLabel: range };
+
+  // Temperature swing note
+  let swingNote = null;
+  if (isNum(temp) && isNum(maxTemp) && Math.abs(maxTemp - temp) >= (metric ? 6 : 10)) {
+    const drop = Math.round(Math.max(temp, maxTemp) - Math.min(temp, maxTemp));
+    swingNote = `Pack a liner — ${drop}${unit} swing expected`;
+  }
+
+  // Rain trajectory
+  let rainNote = null;
+  if (opts.rainTrend === "rising") rainNote = "Rain chance rising later";
+  else if (opts.rainTrend === "falling") rainNote = "Rain chance falling later";
+
+  // Feels-like note when meaningfully colder
+  let feelsNote = null;
+  if (feels != null && feels <= temp - (metric ? 3 : 5)) {
+    feelsNote = `Feels like ${feels}${unit} on the bike`;
+  }
+
+  return { jacket, gloves, extra, tempLabel: range, swingNote, rainNote, feelsNote, feelsLike: feels };
 }
 
 function polarPoint(cx, cy, r, tFrac) {
@@ -974,15 +1059,52 @@ function clampedHourFraction(iso, hours) {
   return f;
 }
 
+/** Approximate civil twilight as ±30 minutes around sunrise/sunset. */
+function civilTwilightIsos(sun) {
+  if (!sun || !sun.sunriseIso || !sun.sunsetIso) return null;
+  const shiftIso = (iso, deltaMin) => {
+    if (!iso || iso.length < 16) return null;
+    const base = new Date(iso);
+    if (Number.isNaN(base.getTime())) {
+      // Fallback parse: treat as local wall time string
+      const hh = parseInt(iso.slice(11, 13), 10);
+      const mm = parseInt(iso.slice(14, 16), 10);
+      let total = hh * 60 + mm + deltaMin;
+      total = ((total % 1440) + 1440) % 1440;
+      const nh = String(Math.floor(total / 60)).padStart(2, "0");
+      const nm = String(total % 60).padStart(2, "0");
+      return iso.slice(0, 11) + nh + ":" + nm;
+    }
+    base.setMinutes(base.getMinutes() + deltaMin);
+    const y = base.getFullYear();
+    const mo = String(base.getMonth() + 1).padStart(2, "0");
+    const d = String(base.getDate()).padStart(2, "0");
+    const h = String(base.getHours()).padStart(2, "0");
+    const m = String(base.getMinutes()).padStart(2, "0");
+    return `${y}-${mo}-${d}T${h}:${m}`;
+  };
+  return {
+    civilDawnIso: shiftIso(sun.sunriseIso, -30),
+    sunriseIso: sun.sunriseIso,
+    sunsetIso: sun.sunsetIso,
+    civilDuskIso: shiftIso(sun.sunsetIso, 30),
+  };
+}
+
 function darknessGradient(sun, hours) {
   if (!sun || !hours.length) return "none";
   const startHour = hours[0].hourNum;
+  const tw = civilTwilightIsos(sun);
   const sr = rawHourFraction(sun.sunriseIso, startHour, hours.length);
   const ss = rawHourFraction(sun.sunsetIso, startHour, hours.length);
-  const dark = "rgba(0,0,0,0.45)";
+  const cd = tw && tw.civilDawnIso ? rawHourFraction(tw.civilDawnIso, startHour, hours.length) : sr - 0.04;
+  const ck = tw && tw.civilDuskIso ? rawHourFraction(tw.civilDuskIso, startHour, hours.length) : ss + 0.04;
+  const dark = "rgba(0,0,0,0.5)";
+  const twilight = "rgba(0,0,0,0.22)";
   const clear = "rgba(0,0,0,0)";
   const pct = (f) => `${Math.max(-25, Math.min(125, f * 100)).toFixed(1)}%`;
-  return `linear-gradient(to right, ${dark} 0%, ${dark} ${pct(sr)}, ${clear} ${pct(sr + 0.02)}, ${clear} ${pct(ss - 0.02)}, ${dark} ${pct(ss)}, ${dark} 100%)`;
+  // Night → civil dawn → sunrise → day → sunset → civil dusk → night
+  return `linear-gradient(to right, ${dark} 0%, ${dark} ${pct(cd)}, ${twilight} ${pct(cd + 0.01)}, ${twilight} ${pct(sr)}, ${clear} ${pct(sr + 0.02)}, ${clear} ${pct(ss - 0.02)}, ${twilight} ${pct(ss)}, ${twilight} ${pct(ck)}, ${dark} ${pct(ck + 0.01)}, ${dark} 100%)`;
 }
 
 function findBestWindow(hours, prefs, sun, minLen = 2) {
@@ -1124,23 +1246,35 @@ function aqiCategory(aqi) {
   return { label: "Hazardous", tone: "high" };
 }
 
-/** Best-effort fetch of hourly US AQI / PM2.5, rolled up to a daily max per date. Fails quietly. */
+/** Best-effort fetch of hourly US AQI / PM2.5 / pollen, rolled up to a daily max per date. Fails quietly.
+ *  Pollen is primarily available in Europe (CAMS); elsewhere it will simply be absent. */
 async function fetchAirQuality(lat, lon) {
   try {
     const r = await fetch(
-      `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&hourly=us_aqi,pm2_5&forecast_days=7&timezone=auto`
+      `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}` +
+        `&hourly=us_aqi,pm2_5,alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen` +
+        `&forecast_days=7&timezone=auto`
     );
     if (!r.ok) return {};
     const j = await r.json();
     if (!j || !j.hourly || !j.hourly.time) return {};
+    const pollenKeys = ["alder_pollen", "birch_pollen", "grass_pollen", "mugwort_pollen", "olive_pollen", "ragweed_pollen"];
     const byDate = {};
     j.hourly.time.forEach((t, i) => {
       const dateKey = t.slice(0, 10);
       const aqi = j.hourly.us_aqi ? j.hourly.us_aqi[i] : null;
       const pm25 = j.hourly.pm2_5 ? j.hourly.pm2_5[i] : null;
-      if (!byDate[dateKey]) byDate[dateKey] = { maxAqi: null, maxPm25: null };
+      if (!byDate[dateKey]) byDate[dateKey] = { maxAqi: null, maxPm25: null, maxPollen: null, pollenLabel: null };
       if (isNum(aqi) && (byDate[dateKey].maxAqi == null || aqi > byDate[dateKey].maxAqi)) byDate[dateKey].maxAqi = aqi;
       if (isNum(pm25) && (byDate[dateKey].maxPm25 == null || pm25 > byDate[dateKey].maxPm25)) byDate[dateKey].maxPm25 = pm25;
+      // Track the highest single pollen type for the day
+      pollenKeys.forEach((key) => {
+        const v = j.hourly[key] ? j.hourly[key][i] : null;
+        if (isNum(v) && v > 0 && (byDate[dateKey].maxPollen == null || v > byDate[dateKey].maxPollen)) {
+          byDate[dateKey].maxPollen = v;
+          byDate[dateKey].pollenLabel = key.replace("_pollen", "").replace(/^\w/, (c) => c.toUpperCase());
+        }
+      });
     });
     return byDate;
   } catch (e) {
@@ -1532,7 +1666,25 @@ function LocationPicker({ value, onChange, allowCurrent = true }) {
   );
 }
 
-function CommuteCard({ label, sublabel, windowLabel, verdict }) {
+function windInfoForHours(hours, bearing, metric) {
+  if (!hours || !hours.length || bearing == null) return null;
+  const withDir = hours.filter((h) => isNum(h.wind) && isNum(h.windDir));
+  if (!withDir.length) return null;
+  // Use the hour with strongest wind in the window
+  const strongest = withDir.reduce((a, b) => (b.wind > a.wind ? b : a));
+  const angle = classifyWindAngle(strongest.windDir, bearing);
+  const unit = metric ? "km/h" : "mph";
+  const label = angle === "headwind" ? "Headwind" : angle === "tailwind" ? "Tailwind" : "Crosswind";
+  return {
+    angle,
+    label,
+    wind: Math.round(strongest.wind),
+    unit,
+    text: `${label} ${Math.round(strongest.wind)} ${unit}`,
+  };
+}
+
+function CommuteCard({ label, sublabel, windowLabel, verdict, windInfo }) {
   const good = verdict.status === "good";
   const unknown = verdict.status === "unknown";
   return (
@@ -1555,6 +1707,14 @@ function CommuteCard({ label, sublabel, windowLabel, verdict }) {
           </span>
         )}
       </div>
+      {windInfo && (
+        <div className={`mt-2 flex items-center gap-1.5 text-sm font-mono ${
+          windInfo.angle === "crosswind" ? "text-amber-400" : windInfo.angle === "headwind" ? "text-zinc-300" : "text-zinc-500"
+        }`}>
+          <Wind className="w-3.5 h-3.5 shrink-0" />
+          {windInfo.text}
+        </div>
+      )}
       {!good && !unknown && verdict.reasons.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {verdict.reasons.map((r, i) => (
@@ -1571,16 +1731,25 @@ function CommuteCard({ label, sublabel, windowLabel, verdict }) {
 
 function SunTimes({ sun }) {
   if (!sun) return null;
+  const tw = civilTwilightIsos(sun);
   return (
-    <div className="flex items-center justify-center gap-6 text-sm text-zinc-400 font-mono">
-      <span className="flex items-center gap-1.5">
-        <Sun className="w-3.5 h-3.5 text-amber-400" />
-        {fmtTimeIso(sun.sunriseIso)}
-      </span>
-      <span className="flex items-center gap-1.5">
-        <Moon className="w-3.5 h-3.5 text-zinc-500" />
-        {fmtTimeIso(sun.sunsetIso)}
-      </span>
+    <div className="flex flex-col items-center gap-1">
+      <div className="flex items-center justify-center gap-5 text-sm text-zinc-400 font-mono">
+        <span className="flex items-center gap-1.5">
+          <Sun className="w-3.5 h-3.5 text-amber-400" />
+          {fmtTimeIso(sun.sunriseIso)}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <Moon className="w-3.5 h-3.5 text-zinc-500" />
+          {fmtTimeIso(sun.sunsetIso)}
+        </span>
+      </div>
+      {tw && (
+        <div className="flex items-center justify-center gap-4 text-sm text-zinc-600 font-mono">
+          <span title="Civil dawn">Dawn {fmtTimeIso(tw.civilDawnIso)}</span>
+          <span title="Civil dusk">Dusk {fmtTimeIso(tw.civilDuskIso)}</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -1740,6 +1909,13 @@ function GearCard({ gear }) {
           <div className="text-base text-zinc-200">{gear.gloves}</div>
         </div>
       </div>
+      {(gear.feelsNote || gear.swingNote || gear.rainNote) && (
+        <div className="mt-3 space-y-1">
+          {gear.feelsNote && <div className="text-sm text-amber-300/90 font-mono">{gear.feelsNote}</div>}
+          {gear.swingNote && <div className="text-sm text-zinc-400">{gear.swingNote}</div>}
+          {gear.rainNote && <div className="text-sm text-sky-400/90">{gear.rainNote}</div>}
+        </div>
+      )}
       {gear.extra.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {gear.extra.map((e, i) => (
@@ -1980,6 +2156,13 @@ function App() {
   const [data, setData] = useState(null);
   const [editing, setEditing] = useState(false);
   const [showLog, setShowLog] = useState(false);
+  const [showChecklist, setShowChecklist] = useState(false);
+  const [checklist, setChecklist] = useState(() => {
+    const init = {};
+    DEFAULT_CHECKLIST.forEach((item) => { init[item.id] = false; });
+    return init;
+  });
+  const [checklistCheckedAt, setChecklistCheckedAt] = useState(null);
   const [weatherHome, setWeatherHome] = useState(null);
   const [weatherWork, setWeatherWork] = useState(null);
   const [alerts, setAlerts] = useState({ home: [], work: [] });
@@ -2204,6 +2387,20 @@ function App() {
       } catch (e) {
         // default stays collapsed
       }
+      try {
+        const clRes = await storage.get(STORAGE_KEY_CHECKLIST);
+        if (clRes && clRes.value) {
+          const parsed = JSON.parse(clRes.value);
+          if (parsed && parsed.items) {
+            const next = {};
+            DEFAULT_CHECKLIST.forEach((item) => { next[item.id] = !!parsed.items[item.id]; });
+            setChecklist(next);
+            setChecklistCheckedAt(parsed.checkedAt || null);
+          }
+        }
+      } catch (e) {
+        // no checklist yet
+      }
       setLoaded(true);
     })();
   }, []);
@@ -2230,12 +2427,39 @@ function App() {
     };
   }, [data, editing, loadWeather, lastUpdated]);
 
+  const persistChecklist = async (items, checkedAt) => {
+    try {
+      await storage.set(STORAGE_KEY_CHECKLIST, JSON.stringify({ items, checkedAt }));
+    } catch (e) {
+      // best effort
+    }
+  };
+
+  const toggleChecklistItem = (id) => {
+    setChecklist((prev) => {
+      const next = { ...prev, [id]: !prev[id] };
+      const now = Date.now();
+      setChecklistCheckedAt(now);
+      persistChecklist(next, now);
+      return next;
+    });
+  };
+
+  const resetChecklist = () => {
+    const next = {};
+    DEFAULT_CHECKLIST.forEach((item) => { next[item.id] = false; });
+    setChecklist(next);
+    setChecklistCheckedAt(null);
+    persistChecklist(next, null);
+  };
+
   const openEdit = () => {
     if (data) {
       setFormPrefs({ ...DEFAULT_PREFS, ...data.prefs });
       setFormLocations(data.locations);
     }
     setShowLog(false);
+    setShowChecklist(false);
     setError(null);
     setEditing(true);
   };
@@ -2387,6 +2611,9 @@ function App() {
   const gaugeGradient = darknessGradient(gaugeSun, gaugeHours);
   const sunriseFrac = clampedHourFraction(gaugeSun && gaugeSun.sunriseIso, gaugeHours);
   const sunsetFrac = clampedHourFraction(gaugeSun && gaugeSun.sunsetIso, gaugeHours);
+  const twForChart = gaugeSun ? civilTwilightIsos(gaugeSun) : null;
+  const civilDawnFrac = twForChart ? clampedHourFraction(twForChart.civilDawnIso, gaugeHours) : null;
+  const civilDuskFrac = twForChart ? clampedHourFraction(twForChart.civilDuskIso, gaugeHours) : null;
 
   const inMorningWindow = (h) => hoursInWindow([h], prefs.morningStart, prefs.morningEnd).length > 0;
   const inEveningWindow = (h) => hoursInWindow([h], prefs.eveningStart, prefs.eveningEnd).length > 0;
@@ -2422,7 +2649,30 @@ function App() {
   const minWindowTemp = gearTemps.length ? Math.min(...gearTemps) : null;
   const maxWindowTemp = gearTemps.length ? Math.max(...gearTemps) : null;
   const gearFlags = noCommute ? dayFlags : warningFlags;
-  const gear = gearSuggestion(minWindowTemp, maxWindowTemp, gearFlags, metric);
+
+  // Bearings for wind classification (home→work morning, work→home evening)
+  const homeToWorkBearing = hasWork && data.locations.home && data.locations.work
+    ? bearingBetween(data.locations.home.lat, data.locations.home.lon, data.locations.work.lat, data.locations.work.lon)
+    : null;
+  const workToHomeBearing = hasWork && data.locations.home && data.locations.work
+    ? bearingBetween(data.locations.work.lat, data.locations.work.lon, data.locations.home.lat, data.locations.home.lon)
+    : null;
+
+  const morningWindInfo = windInfoForHours(morningWindowHours, homeToWorkBearing, metric);
+  const eveningWindInfo = windInfoForHours(eveningWindowHours, workToHomeBearing, metric);
+
+  // Feels-like on the bike: use the coldest hour in the gear window with strongest effective wind
+  let gearFeelsLike = null;
+  if (gearTempHours.length && isNum(minWindowTemp)) {
+    const coldest = gearTempHours.reduce((a, b) => (isNum(b.temp) && (!isNum(a.temp) || b.temp < a.temp) ? b : a));
+    const bearingForFeels = homeToWorkBearing != null ? homeToWorkBearing : null;
+    gearFeelsLike = bikeFeelsLike(coldest.temp, coldest.wind, coldest.windDir, bearingForFeels, metric);
+  }
+  const rainTrend = rainTrajectory(homeDay ? homeDay.hours : []);
+  const gear = gearSuggestion(minWindowTemp, maxWindowTemp, gearFlags, metric, {
+    feelsLike: gearFeelsLike,
+    rainTrend,
+  });
 
   // Motorcycle-specific advisories for the day being viewed. Checked per commute
   // leg (morning at home, evening at work) so sun times and travel direction line
@@ -2464,9 +2714,7 @@ function App() {
     }
     if (hasWork && data.locations.home && data.locations.work) {
       const crosswindMph = metric ? 24 : 15;
-      const homeToWork = bearingBetween(data.locations.home.lat, data.locations.home.lon, data.locations.work.lat, data.locations.work.lon);
-      const workToHome = bearingBetween(data.locations.work.lat, data.locations.work.lon, data.locations.home.lat, data.locations.home.lon);
-      if (hasCrosswindRisk(morningHrs, homeToWork, crosswindMph) || hasCrosswindRisk(eveningHrs, workToHome, crosswindMph)) {
+      if (hasCrosswindRisk(morningHrs, homeToWorkBearing, crosswindMph) || hasCrosswindRisk(eveningHrs, workToHomeBearing, crosswindMph)) {
         list.push({
           key: "crosswind",
           icon: Wind,
@@ -2485,6 +2733,17 @@ function App() {
         tone: aqi.tone,
         title: `Air quality: ${aqi.label}`,
         detail: `AQI up to ${Math.round(aqiEntry.maxAqi)} today — you're breathing this directly through a visor. Consider a filtered mask on longer rides.`,
+      });
+    }
+    // Pollen (mainly Europe; silent elsewhere)
+    if (aqiEntry && isNum(aqiEntry.maxPollen) && aqiEntry.maxPollen >= 50) {
+      const level = aqiEntry.maxPollen >= 150 ? "high" : aqiEntry.maxPollen >= 80 ? "elevated" : "moderate";
+      list.push({
+        key: "pollen",
+        icon: CloudFog,
+        tone: aqiEntry.maxPollen >= 150 ? "high" : "warn",
+        title: `Pollen ${level}${aqiEntry.pollenLabel ? ` (${aqiEntry.pollenLabel})` : ""}`,
+        detail: `Peak ${Math.round(aqiEntry.maxPollen)} grains/m³ — can irritate eyes and airways through a visor on longer rides.`,
       });
     }
     return list;
@@ -2568,8 +2827,11 @@ function App() {
             >
               <RefreshCw className={`w-5 h-5 ${loadingWeather ? "animate-spin" : ""}`} />
             </button>
-            <button type="button" onClick={() => setShowLog(!showLog)} className={`p-1.5 rounded-lg hover:bg-zinc-800 shrink-0 ${showLog ? "text-amber-400" : "text-zinc-400"}`} aria-label="Ride log">
+            <button type="button" onClick={() => { setShowChecklist(false); setShowLog(!showLog); }} className={`p-1.5 rounded-lg hover:bg-zinc-800 shrink-0 ${showLog ? "text-amber-400" : "text-zinc-400"}`} aria-label="Ride log">
               <ListChecks className="w-5 h-5" />
+            </button>
+            <button type="button" onClick={() => { setShowLog(false); setShowChecklist(!showChecklist); }} className={`p-1.5 rounded-lg hover:bg-zinc-800 shrink-0 ${showChecklist ? "text-amber-400" : "text-zinc-400"}`} aria-label="Pre-ride checklist">
+              <ClipboardList className="w-5 h-5" />
             </button>
             <button type="button" onClick={openEdit} className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 shrink-0" aria-label="Settings">
               <Settings2 className="w-5 h-5" />
@@ -2707,6 +2969,52 @@ function App() {
                 Save
               </button>
             </div>
+          </div>
+        ) : showChecklist ? (
+          <div className="main-stack">
+            <button type="button" onClick={() => setShowChecklist(false)} className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-zinc-200">
+              <ChevronLeft className="w-4 h-4" /> Back to forecast
+            </button>
+
+            <SectionCard title="Pre-ride checklist">
+              <p className="text-sm text-zinc-500">Quick safety scan before you roll — does not affect the ride score.</p>
+              <div className="space-y-1">
+                {DEFAULT_CHECKLIST.map((item) => {
+                  const checked = !!checklist[item.id];
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => toggleChecklistItem(item.id)}
+                      className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left border transition-colors ${
+                        checked
+                          ? "bg-emerald-500/10 border-emerald-800 text-emerald-300"
+                          : "bg-zinc-800/60 border-zinc-800 text-zinc-300 hover:border-zinc-700"
+                      }`}
+                    >
+                      <span className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 ${
+                        checked ? "bg-emerald-500 border-emerald-500 text-zinc-950" : "border-zinc-600"
+                      }`}>
+                        {checked && <CheckCircle2 className="w-3.5 h-3.5" />}
+                      </span>
+                      <span className={`text-sm ${checked ? "line-through opacity-80" : ""}`}>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="flex items-center justify-between mt-3 pt-2">
+                {checklistCheckedAt ? (
+                  <span className="text-sm text-zinc-600 font-mono">
+                    Last updated {formatUpdated(checklistCheckedAt)}
+                  </span>
+                ) : (
+                  <span className="text-sm text-zinc-600">Not checked yet</span>
+                )}
+                <button type="button" onClick={resetChecklist} className="text-sm text-zinc-500 hover:text-zinc-300 flex items-center gap-1">
+                  <RotateCcw className="w-3.5 h-3.5" /> Reset
+                </button>
+              </div>
+            </SectionCard>
           </div>
         ) : showLog ? (
           <div className="main-stack">
@@ -2912,12 +3220,14 @@ function App() {
                               sublabel={hasWork ? `At ${data.locations.home.name}` : null}
                               windowLabel={`${prefs.morningStart} – ${prefs.morningEnd}`}
                               verdict={morningVerdict}
+                              windInfo={morningWindInfo}
                             />
                             <CommuteCard
                               label="Evening commute"
                               sublabel={hasWork ? `At ${data.locations.work.name}` : null}
                               windowLabel={`${prefs.eveningStart} – ${prefs.eveningEnd}`}
                               verdict={eveningVerdict}
+                              windInfo={eveningWindInfo}
                             />
                           </div>
                         )}
@@ -2952,11 +3262,17 @@ function App() {
                           <div className="overflow-x-auto">
                             <div className="relative min-w-max">
                               <div className="absolute inset-0 rounded-lg pointer-events-none" style={{ background: gaugeGradient }} />
+                              {civilDawnFrac !== null && (
+                                <div className="absolute top-0 bottom-0 w-px bg-zinc-500/50 pointer-events-none" style={{ left: `${civilDawnFrac * 100}%` }} title="Civil dawn" />
+                              )}
                               {sunriseFrac !== null && (
-                                <div className="absolute top-0 bottom-0 w-px bg-amber-400/70 pointer-events-none" style={{ left: `${sunriseFrac * 100}%` }} />
+                                <div className="absolute top-0 bottom-0 w-px bg-amber-400/80 pointer-events-none" style={{ left: `${sunriseFrac * 100}%` }} title="Sunrise" />
                               )}
                               {sunsetFrac !== null && (
-                                <div className="absolute top-0 bottom-0 w-px bg-amber-400/70 pointer-events-none" style={{ left: `${sunsetFrac * 100}%` }} />
+                                <div className="absolute top-0 bottom-0 w-px bg-amber-400/80 pointer-events-none" style={{ left: `${sunsetFrac * 100}%` }} title="Sunset" />
+                              )}
+                              {civilDuskFrac !== null && (
+                                <div className="absolute top-0 bottom-0 w-px bg-zinc-500/50 pointer-events-none" style={{ left: `${civilDuskFrac * 100}%` }} title="Civil dusk" />
                               )}
                               <div className="relative flex items-end gap-1 h-20">
                                 {hourEvals.map(({ hour, ev }, i) => {
@@ -2985,7 +3301,8 @@ function App() {
                             {!noCommute && (
                               <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-amber-400" /> Commute window</span>
                             )}
-                            <span className="flex items-center gap-1.5"><span className="w-0.5 h-2.5 bg-amber-400/70" /> Sunrise/sunset</span>
+                            <span className="flex items-center gap-1.5"><span className="w-0.5 h-2.5 bg-amber-400/80" /> Sunrise/sunset</span>
+                            <span className="flex items-center gap-1.5"><span className="w-0.5 h-2.5 bg-zinc-500/60" /> Civil twilight</span>
                           </div>
                         </div>
 
